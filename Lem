@@ -72,7 +72,7 @@ Window:SelectTab(FirstTab)
 
 
 local Toggle = AddToggle(Main, {
-  Name = "ESP",
+  Name = "Toggle Test",
   Default = false,
   Callback = function(Value)
     
@@ -80,123 +80,16 @@ local Toggle = AddToggle(Main, {
 })
 
 --[[
-  Name = ""
+  Name = "Toggle Test"
   Default = false
   Callback = function(Value)
-    -- local esp_settings = { ---- table for esp settings 
-    textsize = 8,
-    colour = 255,255,255
+    -- function of your checkbox
+  end
+]]
 }
 
-local gui = Instance.new("BillboardGui")
-local esp = Instance.new("TextLabel",gui) ---- new instances to make the billboard gui and the textlabel
-
-
-
-gui.Name = "Cracked esp"; ---- properties of the esp
-gui.ResetOnSpawn = false
-gui.AlwaysOnTop = true;
-gui.LightInfluence = 0;
-gui.Size = UDim2.new(1.75, 0, 1.75, 0);
-esp.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
-esp.Text = ""
-esp.Size = UDim2.new(0.0001, 0.00001, 0.0001, 0.00001);
-esp.BorderSizePixel = 4;
-esp.BorderColor3 = Color3.new(esp_settings.colour)
-esp.BorderSizePixel = 0
-esp.Font = "GothamSemibold"
-esp.TextSize = esp_settings.textsize
-esp.TextColor3 = Color3.fromRGB(esp_settings.colour) -- text colour
-
-game:GetService("RunService").RenderStepped:Connect(function() ---- loops faster than a while loop :)
-    for i,v in pairs (game:GetService("Players"):GetPlayers()) do
-        if v ~= game:GetService("Players").LocalPlayer and v.Character.Head:FindFirstChild("Cracked esp")==nil and v.TeamColor ~= game:GetService("Players").LocalPlayer.TeamColor then -- craeting checks for team check, local player etc
-            esp.Text = "{"..v.Name.."}"
-            gui:Clone().Parent = v.Character.Head
-    end
-end
-end)
-  end
-
-FirstTab:AddButton({"speed ( <font color='rgb(88, 101, 242)'></font>)", function(Value)
-
-
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local Num = Instance.new("TextBox")
-local Plus = Instance.new("TextButton")
-local Minus = Instance.new("TextButton")
-
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ResetOnSpawn = false
-
 Frame.Size = UDim2.new(0, 200, 0, 100)
-Frame.Position = UDim2.new(0.5, -100, 0.5, -50)
-Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Frame.Parent = ScreenGui
-Frame.Active = true
-Frame.Draggable = true
-
-Num.Size = UDim2.new(0.6, 0, 0.6, 0)
-Num.Position = UDim2.new(0.2, 0, 0.3, 0)
-Num.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Num.TextColor3 = Color3.new(1, 1, 1)
-Num.TextScaled = true
-Num.Font = Enum.Font.SourceSans
-Num.ClearTextOnFocus = true
-Num.Parent = Frame
-
-Plus.Size = UDim2.new(0.2, 0, 0.6, 0)
-Plus.Position = UDim2.new(0.8, 0, 0.3, 0)
-Plus.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-Plus.TextColor3 = Color3.new(1, 1, 1)
-Plus.TextScaled = true
-Plus.Font = Enum.Font.SourceSans
-Plus.Text = "+"
-Plus.Parent = Frame
-
-Minus.Size = UDim2.new(0.2, 0, 0.6, 0)
-Minus.Position = UDim2.new(0, 0, 0.3, 0)
-Minus.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-Minus.TextColor3 = Color3.new(1, 1, 1)
-Minus.TextScaled = true
-Minus.Font = Enum.Font.SourceSans
-Minus.Text = "-"
-Minus.Parent = Frame
-
-local player = game.Players.LocalPlayer
-local number
-local humanoid
-local EditingNum = false
-
-local function UpdateNum()
-    Num.Text = tostring(number)
-    if humanoid then
-        humanoid.WalkSpeed = number
-    end
-end
-
-local function onCharacterAdded(character)
-    humanoid = character:WaitForChild("Humanoid")
-    number = humanoid.WalkSpeed
-    humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-        if humanoid.WalkSpeed ~= number then
-            humanoid.WalkSpeed = number
-        end
-    end)
-    UpdateNum()
-end
-
-player.CharacterAdded:Connect(onCharacterAdded)
-
-if player.Character then
-    onCharacterAdded(player.Character)
-end
-
-Plus.MouseButton1Click:Connect(function()
-    number = number + 5
-    UpdateNum()
-end)
+Frame.Position = UDim2.new(0.5, -100, 0.5, Tex
 
 Minus.MouseButton1Click:Connect(function()
     if number > 0 then
