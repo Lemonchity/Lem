@@ -10,7 +10,7 @@ local Window = redzlib:MakeWindow({
 
     Title = "DogeHub",
 
-    SubTitle = "by LemonHubOffical",
+    SubTitle = "by Lemon",
 
     SaveFolder = "DogeHubConfig"
 
@@ -24,7 +24,7 @@ Window:AddMinimizeButton({
 
     Button = {
 
-        Image = "rbxassetid://631727250",
+        Image = "rbxassetid:// 631727250",
 
         BackgroundTransparency = 0
 
@@ -42,15 +42,15 @@ Window:AddMinimizeButton({
 
 -- First tab: Discord invite
 
-local DiscordInviteTab = Window:MakeTab({"Discord Doge Hub Invite", "mail"})
+local DiscordInviteTab = Window:MakeTab({"Doge hub discord", "mail"})
 
 
 
 DiscordInviteTab:AddDiscordInvite({
 
-    Name = "DogeHub discord",
+    Name = "Doge hub Discord",
 
-    Description = "DogeHub Official Server",
+    Description = "This is oficial doge hub",
 
     Logo = "rbxassetid://631727250",
 
@@ -71,29 +71,93 @@ local FirstTab = Window:MakeTab({"First Tab", "dice-1"})
 Window:SelectTab(FirstTab)
 
 
-local Toggle = AddToggle(Main, {
-  Name = "Toggle Test",
-  Default = false,
-  Callback = function(Value)
-    
-  end
-})
+
+FirstTab:AddButton({" speed hack ( <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
 
 --[[
-  Name = "Toggle Test"
-  Default = false
-  Callback = function(Value)
-    -- function of your checkbox
-  end
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
 ]]
-}
+-- This script is made to bypass the mini games that changes the player speed like get +1 speed per second
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local Num = Instance.new("TextBox")
+local Plus = Instance.new("TextButton")
+local Minus = Instance.new("TextButton")
+
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
 
 Frame.Size = UDim2.new(0, 200, 0, 100)
-Frame.Position = UDim2.new(0.5, -100, 0.5, Tex
+Frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true
+
+Num.Size = UDim2.new(0.6, 0, 0.6, 0)
+Num.Position = UDim2.new(0.2, 0, 0.3, 0)
+Num.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Num.TextColor3 = Color3.new(1, 1, 1)
+Num.TextScaled = true
+Num.Font = Enum.Font.SourceSans
+Num.ClearTextOnFocus = true
+Num.Parent = Frame
+
+Plus.Size = UDim2.new(0.2, 0, 0.6, 0)
+Plus.Position = UDim2.new(0.8, 0, 0.3, 0)
+Plus.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+Plus.TextColor3 = Color3.new(1, 1, 1)
+Plus.TextScaled = true
+Plus.Font = Enum.Font.SourceSans
+Plus.Text = "+"
+Plus.Parent = Frame
+
+Minus.Size = UDim2.new(0.2, 0, 0.6, 0)
+Minus.Position = UDim2.new(0, 0, 0.3, 0)
+Minus.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+Minus.TextColor3 = Color3.new(1, 1, 1)
+Minus.TextScaled = true
+Minus.Font = Enum.Font.SourceSans
+Minus.Text = "-"
+Minus.Parent = Frame
+
+local player = game.Players.LocalPlayer
+local number
+local humanoid
+local EditingNum = false
+
+local function UpdateNum()
+    Num.Text = tostring(number)
+    if humanoid then
+        humanoid.WalkSpeed = number
+    end
+end
+
+local function onCharacterAdded(character)
+    humanoid = character:WaitForChild("Humanoid")
+    number = humanoid.WalkSpeed
+    humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        if humanoid.WalkSpeed ~= number then
+            humanoid.WalkSpeed = number
+        end
+    end)
+    UpdateNum()
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+
+Plus.MouseButton1Click:Connect(function()
+    number = number + 1
+    UpdateNum()
+end)
 
 Minus.MouseButton1Click:Connect(function()
     if number > 0 then
-        number = number - 5
+        number = number - 1
         UpdateNum()
     end
 end)
@@ -116,21 +180,22 @@ Num.FocusLost:Connect(function(enterPressed)
 end)
 
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = " WalkSpeed",
-    Text = "Doge hub",
+    Title = "[Bypass] WalkSpeed Gui",
+    Text = "Made By the_king.78",
     Duration = 12
 })
 
 UpdateNum()
+
 end})
 
 
 
 local LolToggle = FirstTab:AddToggle({
 
-  Name = "Infinite stamina",
+  Name = "Inf stamina",
 
-  Description = "INF stamina. (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
+  Description = "gives inf stamina (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
 
   Default = false 
 
@@ -168,7 +233,7 @@ end)
 
 FirstTab:AddSlider({
 
-    Name = "Slider  (prints the sliders <font color='rgb(255, 255, 0)'>value</font>)",
+    Name = "Slider fun (prints the sliders <font color='rgb(255, 255, 0)'>value</font>)",
 
     Min = 1,
 
@@ -196,7 +261,7 @@ local SecondTab = Window:MakeTab({"Second Tab", "dice-2"})
 
 -- Add section before paragraph
 
-local Section = SecondTab:AddSection({"funnn"})
+local Section = SecondTab:AddSection({"too idk"})
 
 
 
@@ -204,9 +269,9 @@ local Section = SecondTab:AddSection({"funnn"})
 
 local Paragraph = SecondTab:AddParagraph({
 
-    "Funn", 
+    "idi", 
 
-    "This is funn."
+    "This is an Example Paragraph\nThis is the second line of the paragraph."
 
 })
 
@@ -218,7 +283,7 @@ local Dropdown = SecondTab:AddDropdown({
 
     Name = "fun",
 
-    Description = "Prints the drop-down",
+    Description = "if you feel boring ",
 
     Options = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
 
@@ -240,7 +305,7 @@ local Dropdown = SecondTab:AddDropdown({
 
 local TextBox = SecondTab:AddTextBox({
 
-    Name = "text",
+    Name = "Text",
 
     Description = "Prints whatever you type in textbox", 
 
