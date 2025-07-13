@@ -12,7 +12,7 @@ local Window = redzlib:MakeWindow({
 
     SubTitle = "by LemonHubOffical",
 
-    SaveFolder = "ExampleHubConfig"
+    SaveFolder = "DogeHubConfig"
 
 })
 
@@ -84,7 +84,7 @@ local LolToggle = FirstTab:AddToggle({
 
   Name = "Infinite stamina",
 
-  Description = "Prints the state of the toggle (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
+  Description = "INF stamina. (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
 
   Default = false 
 
@@ -150,7 +150,7 @@ local SecondTab = Window:MakeTab({"Second Tab", "dice-2"})
 
 -- Add section before paragraph
 
-local Section = SecondTab:AddSection({"Example Section"})
+local Section = SecondTab:AddSection({"funnn"})
 
 
 
@@ -160,7 +160,7 @@ local Paragraph = SecondTab:AddParagraph({
 
     "Funn", 
 
-    "This is an Example Paragraph\nThis is the second line of the paragraph."
+    "This is funn."
 
 })
 
