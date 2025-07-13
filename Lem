@@ -72,7 +72,7 @@ Window:SelectTab(FirstTab)
 
 
 
-FirstTab:AddButton({"speed (prints <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
+FirstTab:AddButton({"speed ( <font color='rgb(88, 101, 242)'></font>)", function(Value)
 
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -148,13 +148,13 @@ if player.Character then
 end
 
 Plus.MouseButton1Click:Connect(function()
-    number = number + 1
+    number = number + 5
     UpdateNum()
 end)
 
 Minus.MouseButton1Click:Connect(function()
     if number > 0 then
-        number = number - 1
+        number = number - 5
         UpdateNum()
     end
 end)
@@ -177,8 +177,8 @@ Num.FocusLost:Connect(function(enterPressed)
 end)
 
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "[Bypass] WalkSpeed Gui",
-    Text = "Made By the_king.78",
+    Title = " WalkSpeed",
+    Text = "Doge hub",
     Duration = 12
 })
 
