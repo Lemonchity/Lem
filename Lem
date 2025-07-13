@@ -1,4 +1,4 @@
--- Load Redz Hub UI Library
+t-- Load Redz Hub UI Library
 
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
@@ -24,7 +24,7 @@ Window:AddMinimizeButton({
 
     Button = {
 
-        Image = "rbxassetid://631727250",
+        Image = "asset/631727250",
 
         BackgroundTransparency = 0
 
