@@ -1,4 +1,4 @@
-t-- Load Redz Hub UI Library
+-- Load Redz Hub UI Library
 
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
@@ -8,11 +8,11 @@ local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao1
 
 local Window = redzlib:MakeWindow({
 
-    Title = "Doge Hub",
+    Title = "DogeHub",
 
-    SubTitle = "by Lemon",
+    SubTitle = "by LemonHubOffical",
 
-    SaveFolder = "DogeHubConfig"
+    SaveFolder = "ExampleHubConfig"
 
 })
 
@@ -42,19 +42,19 @@ Window:AddMinimizeButton({
 
 -- First tab: Discord invite
 
-local DiscordInviteTab = Window:MakeTab({"Discord Example Invite", "mail"})
+local DiscordInviteTab = Window:MakeTab({"Discord Doge Hub Invite", "mail"})
 
 
 
 DiscordInviteTab:AddDiscordInvite({
 
-    Name = " IDK",
+    Name = "DogeHub discord",
 
-    Description = "Lol",
+    Description = "DogeHub Official Server",
 
-    Logo = "rbxassetid://631727250",
+    Logo = "rbxassetid://18751483361",
 
-    Invite = "https://discord.gg/aFK4KBjd"
+    Invite = "https://discord.gg/example"
 
 })
 
@@ -72,7 +72,7 @@ Window:SelectTab(FirstTab)
 
 
 
-FirstTab:AddButton({"Just button (prints <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
+FirstTab:AddButton({"Fun (prints <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
 
 print("Hello World!")
 
@@ -82,9 +82,9 @@ end})
 
 local LolToggle = FirstTab:AddToggle({
 
-  Name = "infinite stamina",
+  Name = "Infinite stamina",
 
-  Description = "Gives infinite stamina (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
+  Description = "Prints the state of the toggle (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
 
   Default = false 
 
@@ -122,7 +122,7 @@ end)
 
 FirstTab:AddSlider({
 
-    Name = "For fun (prints the sliders <font color='rgb(255, 255, 0)'>value</font>)",
+    Name = "Slider Example (prints the sliders <font color='rgb(255, 255, 0)'>value</font>)",
 
     Min = 1,
 
@@ -170,7 +170,7 @@ local Paragraph = SecondTab:AddParagraph({
 
 local Dropdown = SecondTab:AddDropdown({
 
-    Name = "Too for fun",
+    Name = "Example Drop-down",
 
     Description = "Prints the drop-down",
 
@@ -194,7 +194,7 @@ local Dropdown = SecondTab:AddDropdown({
 
 local TextBox = SecondTab:AddTextBox({
 
-    Name = "and too for fun",
+    Name = "Textbox Example",
 
     Description = "Prints whatever you type in textbox", 
 
