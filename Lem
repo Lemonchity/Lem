@@ -8,11 +8,11 @@ local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao1
 
 local Window = redzlib:MakeWindow({
 
-    Title = "Example Hub",
+    Title = "Doge Hub",
 
-    SubTitle = "by YourNameHere",
+    SubTitle = "by Lemon",
 
-    SaveFolder = "ExampleHubConfig"
+    SaveFolder = "DogeHubConfig"
 
 })
 
@@ -24,7 +24,7 @@ Window:AddMinimizeButton({
 
     Button = {
 
-        Image = "rbxassetid://71014873973869",
+        Image = "rbxassetid://631727250",
 
         BackgroundTransparency = 0
 
@@ -48,13 +48,13 @@ local DiscordInviteTab = Window:MakeTab({"Discord Example Invite", "mail"})
 
 DiscordInviteTab:AddDiscordInvite({
 
-    Name = "Example Discord Invite",
+    Name = " IDK",
 
-    Description = "This is an Example discord invite",
+    Description = "Lol",
 
-    Logo = "rbxassetid://18751483361",
+    Logo = "rbxassetid://631727250",
 
-    Invite = "https://discord.gg/example"
+    Invite = "https://discord.gg/aFK4KBjd"
 
 })
 
@@ -72,7 +72,7 @@ Window:SelectTab(FirstTab)
 
 
 
-FirstTab:AddButton({"Example Button (prints <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
+FirstTab:AddButton({"Just button (prints <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
 
 print("Hello World!")
 
@@ -82,9 +82,9 @@ end})
 
 local LolToggle = FirstTab:AddToggle({
 
-  Name = "Toggle",
+  Name = "infinite stamina",
 
-  Description = "Prints the state of the toggle (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
+  Description = "Gives infinite stamina (<font color='rgb(0, 255, 0)'>On</font> or <font color='rgb(255, 0, 0)'>Off</font>)",
 
   Default = false 
 
@@ -122,7 +122,7 @@ end)
 
 FirstTab:AddSlider({
 
-    Name = "Slider Example (prints the sliders <font color='rgb(255, 255, 0)'>value</font>)",
+    Name = "For fun (prints the sliders <font color='rgb(255, 255, 0)'>value</font>)",
 
     Min = 1,
 
@@ -170,7 +170,7 @@ local Paragraph = SecondTab:AddParagraph({
 
 local Dropdown = SecondTab:AddDropdown({
 
-    Name = "Example Drop-down",
+    Name = "Too for fun",
 
     Description = "Prints the drop-down",
 
@@ -194,7 +194,7 @@ local Dropdown = SecondTab:AddDropdown({
 
 local TextBox = SecondTab:AddTextBox({
 
-    Name = "Textbox Example",
+    Name = "and too for fun",
 
     Description = "Prints whatever you type in textbox", 
 
