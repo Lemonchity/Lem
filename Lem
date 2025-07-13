@@ -24,7 +24,7 @@ Window:AddMinimizeButton({
 
     Button = {
 
-        Image = "asset/631727250",
+        Image ="rbxassetid://631727250",
 
         BackgroundTransparency = 0
 
