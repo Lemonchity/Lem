@@ -62,7 +62,7 @@ DiscordInviteTab:AddDiscordInvite({
 
 -- Second tab: First Tab with dice icon
 
-local FirstTab = Window:MakeTab({"First Tab", "dice-1"})
+local FirstTab = Window:MakeTab({"FORSAKEN ", "dice-1"})
 
 
 
@@ -70,7 +70,11 @@ local FirstTab = Window:MakeTab({"First Tab", "dice-1"})
 
 Window:SelectTab(FirstTab)
 
-
+FirstTab:AddButton({" VenomX Keyless   ( <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fratelevostru9999/src/refs/heads/main/VenomX%20Fling%20Things%20And%20People",true))()
 
 FirstTab:AddButton({" speed hack ( <font color='rgb(88, 101, 242)'>Hello World</font>)", function(Value)
 
