@@ -82,7 +82,7 @@ local Hub = {}
 function Hub:AddTab(TabName, ColumnCount)  
 local ColumnCount = ColumnCount or 1  
 local TabBtn = Instance.new("TextButton")  
-TabBtn.Size = UDim2.new(1, 0, 0, 380)  
+TabBtn.Size = UDim2.new(1, 0, 0, 3)  
 TabBtn.BackgroundColor3 = Theme.SidebarBg  
 TabBtn.Text = TabName  
 TabBtn.TextColor3 = Theme.TextColor  
