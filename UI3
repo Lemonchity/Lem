@@ -6240,23 +6240,35 @@ end
                     end
                 end
 
-local function ToggleUI()
-    if Window.MainFrame then
-        Window.MainFrame.Visible = not Window.MainFrame.Visible
-    end
+-- UNIVERSIAL UI TOGGLE (The "Find-It-Yourself" Edition, nigga!)
+
+local UserInputService = game:GetService("UserInputService")
+
+-- Функция, которая ищет любой фрейм с названием 'Main' или 'Window', чтобы скрыть его  
+local function ToggleUniversalUI()  
+    local coreGui = game:GetService("CoreGui")  
+    -- Ищем все ScreenGui, которые создала либа (обычно они в CoreGui)  
+    for _, gui in pairs(coreGui:GetChildren()) do  
+        if gui:IsA("ScreenGui") then  
+            -- Ищем внутри любой главный фрейм  
+            for _, frame in pairs(gui:GetDescendants()) do  
+                if frame:IsA("Frame") and (frame.Name:find("Main") or frame.Name:find("Window") or frame.Name:find("Holder")) then  
+                    frame.Visible = not frame.Visible  
+                    return -- Нашли один, переключили и выходим  
+                end  
+            end  
+        end  
+    end  
 end
 
--- Привязываем к RightControl
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.KeyCode == Enum.KeyCode.RightControl then
-            ToggleUI()
-        end
-    end
-end)
-
--- Если хочешь, чтобы по дефолту меню было скрыто, добавь это:
--- Window.MainFrame.Visible = false
+-- Привязываем к RightControl  
+UserInputService.InputBegan:Connect(function(input, gameProcessed)  
+    if not gameProcessed then  
+        if input.KeyCode == Enum.KeyCode.RightControl then  
+            ToggleUniversalUI()  
+        end  
+    end  
+end)  
 
                 function OptionData:SetSearchVisible(Visible)
                     SetOptionSearchVisible(OptionData, OptionItems, Visible)
