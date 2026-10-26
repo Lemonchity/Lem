@@ -6240,32 +6240,27 @@ end
                     end
                 end
 
--- UNIVERSIAL UI TOGGLE (The "Find-It-Yourself" Edition, nigga!)
+-- ULTIMATE UI TOGGLE (The "Holder-Direct" Edition, nigga!)
 
 local UserInputService = game:GetService("UserInputService")
 
--- Функция, которая ищет любой фрейм с названием 'Main' или 'Window', чтобы скрыть его  
-local function ToggleUniversalUI()  
-    local coreGui = game:GetService("CoreGui")  
-    -- Ищем все ScreenGui, которые создала либа (обычно они в CoreGui)  
-    for _, gui in pairs(coreGui:GetChildren()) do  
-        if gui:IsA("ScreenGui") then  
-            -- Ищем внутри любой главный фрейм  
-            for _, frame in pairs(gui:GetDescendants()) do  
-                if frame:IsA("Frame") and (frame.Name:find("Main") or frame.Name:find("Window") or frame.Name:find("Holder")) then  
-                    frame.Visible = not frame.Visible  
-                    return -- Нашли один, переключили и выходим  
-                end  
-            end  
+local function ToggleUI()  
+    -- Прямо обращаемся к холдеру либы  
+    if getgenv().Library and getgenv().Library.Holder then  
+        getgenv().Library.Holder.Enabled = not getgenv().Library.Holder.Enabled  
+    else  
+        -- Если вдруг la-table еще не в глобалках, ищем в CoreGui/gethui  
+        local holder = gethui():FindFirstChild("\0") or game:GetService("CoreGui"):FindFirstChild("\0")  
+        if holder and holder:IsA("ScreenGui") then  
+            holder.Enabled = not holder.Enabled  
         end  
     end  
 end
 
--- Привязываем к RightControl  
 UserInputService.InputBegan:Connect(function(input, gameProcessed)  
     if not gameProcessed then  
         if input.KeyCode == Enum.KeyCode.RightControl then  
-            ToggleUniversalUI()  
+            ToggleUI()  
         end  
     end  
 end)  
