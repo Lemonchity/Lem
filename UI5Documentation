@@ -1,0 +1,22 @@
+— Tab
+local MainTab = Window:AddTab("General")
+
+— Columns
+local LeftCol = MainTab:AddColumn("Left") — Position
+local RightCol = MainTab:AddColumn("Right")
+
+-- textbox
+LeftCol:AddTextBox("Textbox", "Enter...", true, function(text)
+    Library:Notify("Notify", "Notify " .. text, 3)
+end)
+
+LeftCol:AddTextBox("Name", "0, 50, 0", false, function(coords)
+    Library:Notify("Notify", "Entered: " .. coords, 3)
+end)
+
+RightCol:AddButton("Button", function()
+    Library:Notify("Status", "Activated", 2.5)
+end)
+
+Library:Notify("Status", "Activated", 2.5)
+.              Title.     Text.       duration
