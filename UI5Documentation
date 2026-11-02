@@ -21,10 +21,15 @@ end)
 Library:Notify("Status", "Activated", 2.5)
 .              Title.     Text.       duration
 
--- label
-Library:AddLabel(currentPage, "ESP SETTINGS")
+-- 1. Добавляем TextLabel
+LeftColumn:AddLabel("--- НАСТРОЙКИ ВИЗУАЛА ---")
 
---colorpicker link
-Library:LinkColorPicker(currentPage, "PlayerESP", Color3.fromRGB(0, 170, 255), function(newColor)
-    print("changed esp", newColor)
+-- 2. Добавляем Toggle
+local EspToggle = LeftColumn:AddToggle("Wallhack ESP", false, function(toggled)
+    print("ESP включен:", toggled)
+end)
+
+-- 3. Привязываем Linkcolorpicker к созданному тогглу:
+EspToggle:AddColorPicker(Color3.fromRGB(0, 170, 255), function(newColor)
+    print("Выбран цвет для Wallhack ESP:", newColor)
 end)
