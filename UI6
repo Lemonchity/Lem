@@ -513,144 +513,6 @@ function Library:AddTab(tabName)
             end)
         end
 
--- Создание лейбла
-function Library:AddLabel(page, text)
-    local label = Instance.new("TextLabel")
-    label.Name = "Label_" .. text
-    label.Size = UDim2.new(1, 0, 0, 24)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(180, 180, 180)
-    label.TextSize = 13
-    label.Font = ARCADE_FONT or Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = page
-    return label
-end
-
--- Создание тоггла с контейнером для правых аддонов (колорпикеров)
-function Library:AddToggle(page, toggleName, default, callback)
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Name = "Toggle_" .. toggleName
-    toggleFrame.Size = UDim2.new(1, 0, 0, 32)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    toggleFrame.BorderSizePixel = 0
-    toggleFrame.Parent = page
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = toggleFrame
-
-    -- Контейнер для компонентов справа (кнопка тоггла, колорпикеры)
-    local rightContainer = Instance.new("Frame")
-    rightContainer.Name = "RightComponents"
-    rightContainer.Size = UDim2.new(0, 0, 1, 0)
-    rightContainer.Position = UDim2.new(1, -6, 0, 0)
-    rightContainer.AnchorPoint = Vector2.new(1, 0)
-    rightContainer.BackgroundTransparency = 1
-    rightContainer.AutomaticSize = Enum.AutomaticSize.X
-    rightContainer.Parent = toggleFrame
-
-    local rightLayout = Instance.new("UIListLayout")
-    rightLayout.FillDirection = Enum.FillDirection.Horizontal
-    rightLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    rightLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    rightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    rightLayout.Padding = UDim.new(0, 8)
-    rightLayout.Parent = rightContainer
-
-    -- Название тоггла
-    local label = Instance.new("TextLabel")
-    label.Name = "Title"
-    label.Size = UDim2.new(1, -120, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = toggleName
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 13
-    label.Font = ARCADE_FONT or Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = toggleFrame
-
-    -- Кнопка переключения (LayoutOrder = 2, чтобы всегда быть крайней справа)
-    local switchBtn = Instance.new("TextButton")
-    switchBtn.Name = "Switch"
-    switchBtn.Size = UDim2.new(0, 38, 0, 20)
-    switchBtn.BackgroundColor3 = default and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(35, 35, 42)
-    switchBtn.Text = ""
-    switchBtn.AutoButtonColor = false
-    switchBtn.LayoutOrder = 2
-    switchBtn.Parent = rightContainer
-
-    local switchCorner = Instance.new("UICorner")
-    switchCorner.CornerRadius = UDim.new(1, 0)
-    switchCorner.Parent = switchBtn
-
-    local indicator = Instance.new("Frame")
-    indicator.Name = "Indicator"
-    indicator.Size = UDim2.new(0, 14, 0, 14)
-    indicator.Position = default and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
-    indicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    indicator.BorderSizePixel = 0
-    indicator.Parent = switchBtn
-
-    local indicatorCorner = Instance.new("UICorner")
-    indicatorCorner.CornerRadius = UDim.new(1, 0)
-    indicatorCorner.Parent = indicator
-
-    local isEnabled = default or false
-    switchBtn.MouseButton1Click:Connect(function()
-        isEnabled = not isEnabled
-        switchBtn.BackgroundColor3 = isEnabled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(35, 35, 42)
-        indicator.Position = isEnabled and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
-        if callback then
-            callback(isEnabled)
-        end
-    end)
-
-    return toggleFrame
-end
-
--- Привязка колорпикера к имени тоггла: Linkcolorpicker:Имятоггла
-function Library:LinkColorPicker(page, toggleName, defaultColor, onColorChanged)
-    local toggleFrame = page:FindFirstChild("Toggle_" .. toggleName)
-    if not toggleFrame then
-        warn("Тоггл с именем " .. toggleName .. " не найден!")
-        return
-    end
-
-    local rightContainer = toggleFrame:FindFirstChild("RightComponents")
-    if not rightContainer then return end
-
-    local colorPickerBtn = Instance.new("TextButton")
-    colorPickerBtn.Name = "Linkcolorpicker:" .. toggleName
-    colorPickerBtn.Size = UDim2.new(0, 20, 0, 20)
-    colorPickerBtn.BackgroundColor3 = defaultColor or Color3.fromRGB(255, 0, 128)
-    colorPickerBtn.Text = ""
-    colorPickerBtn.AutoButtonColor = false
-    colorPickerBtn.LayoutOrder = 1 -- Встает левее свитчера
-    colorPickerBtn.Parent = rightContainer
-
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 4)
-    btnCorner.Parent = colorPickerBtn
-
-    local btnStroke = Instance.new("UIStroke")
-    btnStroke.Thickness = 1
-    btnStroke.Color = Color3.fromRGB(255, 255, 255)
-    btnStroke.Transparency = 0.7
-    btnStroke.Parent = colorPickerBtn
-
-    colorPickerBtn.MouseButton1Click:Connect(function()
-        -- Вызов диалога выбора цвета
-        if onColorChanged then
-            onColorChanged(colorPickerBtn.BackgroundColor3)
-        end
-    end)
-
-    return colorPickerBtn
-end
-
         function col:AddSlider(text, min, max, default, callback)
             callback = callback or function() end
             min, max = min or 0, max or 100
@@ -734,6 +596,34 @@ end
                     update(input)
                 end
             end)
+        end
+
+        function col:AddLabel(text)
+            local label = Instance.new("TextLabel")
+            label.Name = "TextLabel"
+            label.Size = UDim2.new(1, 0, 0, 24)
+            label.BackgroundTransparency = 1
+            label.Text = text or "LABEL"
+            label.TextColor3 = Color3.fromRGB(180, 180, 205)
+            label.Font = ARCADE_FONT
+            label.TextSize = 14
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = self.Holder
+            return label
+        end
+
+        function col:AddLabel(text)
+            local label = Instance.new("TextLabel")
+            label.Name = "TextLabel"
+            label.Size = UDim2.new(1, 0, 0, 24)
+            label.BackgroundTransparency = 1
+            label.Text = text or "LABEL"
+            label.TextColor3 = Color3.fromRGB(180, 180, 205)
+            label.Font = ARCADE_FONT
+            label.TextSize = 14
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = self.Holder
+            return label
         end
 
         function col:AddDropdown(text, list, callback)
