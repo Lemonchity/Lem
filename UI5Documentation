@@ -23,19 +23,11 @@ Library:Notify("Status", "Activated", 2.5)
 
 local LeftCol = MyTab:AddColumn("Left")
 
--- 1. Добавление лейбла
+-- label
 LeftCol:AddLabel("--- VISUAL SETTINGS ---")
 
--- 2. Тоггл с привязанным колорпикером (Linkcolorpicker:Chams)
-local chamsToggle = LeftCol:AddToggle("Chams", false, function(enabled)
-    print("Состояние Chams:", enabled)
-end)
 
-local chamsColor = chamsToggle:LinkColorpicker("Chams", Color3.fromRGB(255, 0, 128), function(color)
-    print("Выбран цвет Chams:", color)
-end)
-
--- 3. Самостоятельный отдельный колорпикер
-LeftCol:AddColorPicker("Crosshair", Color3.fromRGB(0, 255, 150), function(color)
-    print("Цвет прицела:", color)
+LeftCol:AddSlider("Speed", 16, 200, 16,
+function(value)
+— callback here
 end)
