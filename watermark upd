@@ -1,0 +1,61 @@
+function Library:Watermark(params)
+Watermark("Text", "rbxassetid://..."),
+Watermark({ Text = "Text", Icon = "rbxassetid://..." })
+    local text = ""
+    local iconId = nil
+
+    if type(params) == "table" then
+        text = params.Text or params.Name or "Made By AI"
+        iconId = params.Icon or params.Image
+    else
+        text = tostring(params)
+    end
+
+    local hasIcon = iconId ~= nil and iconId ~= ""
+    local iconSize = 18
+    local padding = 8
+
+    local textWidth = #text * 9 + 20
+    local totalWidth = textWidth + (hasIcon and (iconSize + padding) or 0)
+
+    local wmFrame = Instance.new("Frame")
+    wmFrame.Name = "Watermark"
+    wmFrame.Size = UDim2.new(0, totalWidth, 0, 28)
+    wmFrame.Position = UDim2.new(0, 20, 0, 20)
+    wmFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    wmFrame.BorderSizePixel = 0
+    wmFrame.Parent = ScreenGui
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = wmFrame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1.5
+    stroke.Parent = wmFrame
+    attachRainbowStroke(stroke)
+
+    -- Текст ватермарка
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, hasIcon and -(iconSize + padding + 6) or 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = FONT
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(240, 240, 240)
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = wmFrame
+
+    if hasIcon then
+        local wmIcon = Instance.new("ImageLabel")
+        wmIcon.Name = "WatermarkIcon"
+        wmIcon.Size = UDim2.new(0, iconSize, 0, iconSize)
+        wmIcon.Position = UDim2.new(1, -(iconSize + 8), 0.5, -iconSize / 2)
+        wmIcon.BackgroundTransparency = 1
+        wmIcon.Image = iconId
+        wmIcon.Parent = wmFrame
+    end
+
+    return wmFrame
+end
