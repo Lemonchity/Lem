@@ -1,0 +1,71 @@
+local Create = Library.Create
+
+-- 1. Создание окна
+local Window = Create:Window({
+    Name = "Lol",
+    Subtitle = "ByAI",
+    Keybind = Enum.KeyCode.RightControl
+})
+
+-- Внутренний объект Add для слайдеров/дропдаунов
+local Add = Window.Add
+
+-- 2. Создание Тоггла с привязкой Колорпикера и Кейбинда
+local Toggle1 = Window.Create:Toggle({
+    Name = "Auto Farm",
+    Default = false,
+    Callback = function(state)
+        print("Toggle State:", state)
+    end
+})
+
+-- Привязка Colorpicker
+Toggle1.add:Colorpicker({
+    Default = Color3.fromRGB(0, 255, 120),
+    Callback = function(col)
+        print("Picked Color:", col)
+    end
+})
+
+-- Привязка Keybind
+Toggle1.add:Keybind({
+    Default = Enum.KeyCode.E,
+    Callback = function(key)
+        print("Key Pressed:", key.Name)
+    end
+})
+
+-- 3. Добавление Слайдера
+Add:Slider({
+    Name = "Speed",
+    Min = 0,
+    Max = 50,
+    Default = 25,
+    Callback = function(val)
+        print("Speed changed to:", val)
+    end
+})
+
+-- 4. Добавление Дропдауна
+Add:Dropdown({
+    Name = "Teleport",
+    List = {"Spawn", "Shop", "Arena"},
+    Callback = function(selected)
+        print("Selected:", selected)
+    end
+})
+
+-- 5. Тест нотификейшенов (анимация, печать текста, таймер снизу, сдвиг вниз)
+Library:Notify({
+    Title = "SYSTEM",
+    Text = "Cheat injected successfully!",
+    Duration = 4
+})
+
+task.wait(1.5)
+
+Library:Notify({
+    Title = "STATUS",
+    Text = "Next notification pushes the previous one down.",
+    Duration = 3
+})
