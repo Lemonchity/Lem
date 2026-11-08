@@ -2,52 +2,53 @@ local Create = Library.Create
 local Add = Library.Add
 
 Add:Watermark({ — watermark
-    Text = "Made By AI",
+    Text = "Made By Lemonchity",
     Icon = "rbxassetid://123456"
 })
 
--- 2. Создаем увеличенное окно с иконкой в TopBar
-local Window = Create:Window({
-    Name = "Lol",
-    Subtitle = "ByAI",
+local Window = Create:Window({ -- Window
+    Name = "Title",
+    Subtitle = "SubTitle",
     Keybind = Enum.KeyCode.RightControl,
-    Icon = "rbxassetid://123456" -- Кастомная иконка справа
+    Icon = "rbxassetid://123456"
 })
 
--- 3. Добавляем Вкладки (с тултипами при наведении)
 local Tab1 = Window.Add:Tab({
     Name = "Main",
     Tooltip = "Main combat & movement settings"
 })
+
+-- add tab
 
 local Tab2 = Window.Add:Tab({
     Name = "Visuals",
     Tooltip = "ESP and render configs"
 })
 
--- 4. Добавляем Колонки (Side = 1 — слева, Side = 2 — справа)
 local LeftCol = Tab1.Add:Column({
     Name = "Farming",
     Description = "Auto actions",
-    Side = 1
+    Side = 1 -- 1 is left 2 is right
 })
 
+ -- Side (groupboxes)
 local RightCol = Tab1.Add:Column({
     Name = "Player Stats",
     Description = "Speed and Jump",
     Side = 2
 })
 
--- 5. Тоггл с привязкой синего RGB-колорпикера и кейбинда
+   -- toggle
 local Toggle1 = LeftCol.Create:Toggle({
-    Name = "Auto Attack",
+    Name = "Toggle",
     Default = false,
     Callback = function(val)
         print("Auto Attack:", val)
     end
 })
 
--- Синее меню RGB слайдеров открывается кликом на квадратик цвета
+--Link Colorpicker
+
 Toggle1.add:Colorpicker({
     Default = Color3.fromRGB(0, 180, 255),
     Callback = function(color)
@@ -55,6 +56,7 @@ Toggle1.add:Colorpicker({
     end
 })
 
+-- Link keybind
 Toggle1.add:Keybind({
     Default = Enum.KeyCode.F,
     Callback = function(key)
@@ -62,7 +64,7 @@ Toggle1.add:Keybind({
     end
 })
 
--- 6. Добавление Слайдера в правую колонку
+-- Slider
 RightCol.Add:Slider({
     Name = "WalkSpeed",
     Min = 16,
@@ -73,7 +75,7 @@ RightCol.Add:Slider({
     end
 })
 
--- 7. Дропдаун
+  -- Dropdown
 RightCol.Add:Dropdown({
     Name = "Target Mode",
     List = {"Closest", "Lowest HP", "Players Only"},
@@ -82,7 +84,7 @@ RightCol.Add:Dropdown({
     end
 })
 
--- 8. Проверка уведомлений
+  -- Notify
 Library:Notify({
     Title = "SUCCESS",
     Text = "All arcade components loaded!",
