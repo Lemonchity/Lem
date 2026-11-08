@@ -24,7 +24,6 @@ if not ScreenGui.Parent then
     ScreenGui.Parent = PlayerGui
 end
 
--- Система RGB обводки ("Змейка")
 local function attachRainbowStroke(strokeInstance)
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
@@ -80,7 +79,6 @@ local function makeDraggable(frame, dragHandle)
     end)
 end
 
--- Тултип курсора
 local TooltipFrame = Instance.new("Frame")
 TooltipFrame.Name = "TooltipFrame"
 TooltipFrame.Size = UDim2.new(0, 100, 0, 24)
@@ -221,7 +219,6 @@ function Library:Notify(params)
     end)
 end
 
--- Watermark с RGB stroke
 function Library:Watermark(text)
     local wmFrame = Instance.new("Frame")
     wmFrame.Name = "Watermark"
@@ -278,7 +275,6 @@ function Library:Window(config)
     MainStroke.Parent = MainFrame
     attachRainbowStroke(MainStroke)
 
-    -- TopBar
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, 0, 0, 42)
@@ -585,7 +581,6 @@ function Library:Window(config)
                     Add = {}
                 }
 
-                -- КЕЙБИНД
                 local function attachKeybind(_, kbCfg)
                     local bind = kbCfg.Default or Enum.KeyCode.E
                     local kbCallback = kbCfg.Callback or function() end
@@ -623,7 +618,6 @@ function Library:Window(config)
                     end)
                 end
 
-                -- СИНЕЕ МЕНЮ COLORPICKER (RGB SLIDERS)
                 local function attachColorpicker(_, cpCfg)
                     local curColor = cpCfg.Default or Color3.fromRGB(255, 255, 255)
                     local cpCallback = cpCfg.Callback or function() end
@@ -640,14 +634,13 @@ function Library:Window(config)
                     CPC.CornerRadius = UDim.new(0, 3)
                     CPC.Parent = CPButton
 
-                    -- Синее выпадающее окно RGB
                     local CPModal = Instance.new("Frame")
                     CPModal.Size = UDim2.new(0, 170, 0, 130)
                     CPModal.Position = UDim2.new(1, 5, 0, 0)
                     CPModal.BackgroundColor3 = Color3.fromRGB(15, 25, 45) -- Синий оттенок
                     CPModal.BorderSizePixel = 0
                     CPModal.Visible = false
-                    CPModal.ZIndex = 50
+                    CPModal.ZIndex = 5000
                     CPModal.Parent = ToggleFrame
 
                     local CPModalCorner = Instance.new("UICorner")
