@@ -1,8 +1,10 @@
 local Create = Library.Create
 local Add = Library.Add
 
--- 1. Добавляем Watermark с бегающей "змейкой"
-Add:Watermark("Made By AI")
+Add:Watermark({ — watermark
+    Text = "Made By AI",
+    Icon = "rbxassetid://123456"
+})
 
 -- 2. Создаем увеличенное окно с иконкой в TopBar
 local Window = Create:Window({
