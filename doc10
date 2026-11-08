@@ -1,71 +1,88 @@
 local Create = Library.Create
+local Add = Library.Add
 
--- 1. Создание окна
+-- 1. Добавляем Watermark с бегающей "змейкой"
+Add:Watermark("Made By AI")
+
+-- 2. Создаем увеличенное окно с иконкой в TopBar
 local Window = Create:Window({
     Name = "Lol",
     Subtitle = "ByAI",
-    Keybind = Enum.KeyCode.RightControl
+    Keybind = Enum.KeyCode.RightControl,
+    Icon = "rbxassetid://123456" -- Кастомная иконка справа
 })
 
--- Внутренний объект Add для слайдеров/дропдаунов
-local Add = Window.Add
+-- 3. Добавляем Вкладки (с тултипами при наведении)
+local Tab1 = Window.Add:Tab({
+    Name = "Main",
+    Tooltip = "Main combat & movement settings"
+})
 
--- 2. Создание Тоггла с привязкой Колорпикера и Кейбинда
-local Toggle1 = Window.Create:Toggle({
-    Name = "Auto Farm",
+local Tab2 = Window.Add:Tab({
+    Name = "Visuals",
+    Tooltip = "ESP and render configs"
+})
+
+-- 4. Добавляем Колонки (Side = 1 — слева, Side = 2 — справа)
+local LeftCol = Tab1.Add:Column({
+    Name = "Farming",
+    Description = "Auto actions",
+    Side = 1
+})
+
+local RightCol = Tab1.Add:Column({
+    Name = "Player Stats",
+    Description = "Speed and Jump",
+    Side = 2
+})
+
+-- 5. Тоггл с привязкой синего RGB-колорпикера и кейбинда
+local Toggle1 = LeftCol.Create:Toggle({
+    Name = "Auto Attack",
     Default = false,
-    Callback = function(state)
-        print("Toggle State:", state)
-    end
-})
-
--- Привязка Colorpicker
-Toggle1.add:Colorpicker({
-    Default = Color3.fromRGB(0, 255, 120),
-    Callback = function(col)
-        print("Picked Color:", col)
-    end
-})
-
--- Привязка Keybind
-Toggle1.add:Keybind({
-    Default = Enum.KeyCode.E,
-    Callback = function(key)
-        print("Key Pressed:", key.Name)
-    end
-})
-
--- 3. Добавление Слайдера
-Add:Slider({
-    Name = "Speed",
-    Min = 0,
-    Max = 50,
-    Default = 25,
     Callback = function(val)
-        print("Speed changed to:", val)
+        print("Auto Attack:", val)
     end
 })
 
--- 4. Добавление Дропдауна
-Add:Dropdown({
-    Name = "Teleport",
-    List = {"Spawn", "Shop", "Arena"},
-    Callback = function(selected)
-        print("Selected:", selected)
+-- Синее меню RGB слайдеров открывается кликом на квадратик цвета
+Toggle1.add:Colorpicker({
+    Default = Color3.fromRGB(0, 180, 255),
+    Callback = function(color)
+        print("New RGB:", color)
     end
 })
 
--- 5. Тест нотификейшенов (анимация, печать текста, таймер снизу, сдвиг вниз)
+Toggle1.add:Keybind({
+    Default = Enum.KeyCode.F,
+    Callback = function(key)
+        print("Toggled by Key:", key.Name)
+    end
+})
+
+-- 6. Добавление Слайдера в правую колонку
+RightCol.Add:Slider({
+    Name = "WalkSpeed",
+    Min = 16,
+    Max = 120,
+    Default = 32,
+    Callback = function(v)
+        print("WalkSpeed:", v)
+    end
+})
+
+-- 7. Дропдаун
+RightCol.Add:Dropdown({
+    Name = "Target Mode",
+    List = {"Closest", "Lowest HP", "Players Only"},
+    Callback = function(choice)
+        print("Selected Mode:", choice)
+    end
+})
+
+-- 8. Проверка уведомлений
 Library:Notify({
-    Title = "SYSTEM",
-    Text = "Cheat injected successfully!",
+    Title = "SUCCESS",
+    Text = "All arcade components loaded!",
     Duration = 4
-})
-
-task.wait(1.5)
-
-Library:Notify({
-    Title = "STATUS",
-    Text = "Next notification pushes the previous one down.",
-    Duration = 3
 })
