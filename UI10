@@ -24,6 +24,7 @@ if not ScreenGui.Parent then
     ScreenGui.Parent = PlayerGui
 end
 
+-- Система RGB обводки ("Змейка")
 local function attachRainbowStroke(strokeInstance)
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
@@ -42,6 +43,7 @@ local function attachRainbowStroke(strokeInstance)
     end)
 end
 
+-- Перетаскивание окон
 local function makeDraggable(frame, dragHandle)
     local dragging = false
     local dragInput, dragStart, startPos
@@ -79,13 +81,14 @@ local function makeDraggable(frame, dragHandle)
     end)
 end
 
+-- Тултип курсора
 local TooltipFrame = Instance.new("Frame")
 TooltipFrame.Name = "TooltipFrame"
 TooltipFrame.Size = UDim2.new(0, 100, 0, 24)
 TooltipFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 TooltipFrame.BorderSizePixel = 0
 TooltipFrame.Visible = false
-TooltipFrame.ZIndex = 100
+TooltipFrame.ZIndex = 4000
 TooltipFrame.Parent = ScreenGui
 
 local TTC = Instance.new("UICorner")
@@ -104,7 +107,7 @@ TooltipLabel.BackgroundTransparency = 1
 TooltipLabel.Font = FONT
 TooltipLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
 TooltipLabel.TextSize = 12
-TooltipLabel.ZIndex = 101
+TooltipLabel.ZIndex = 4001
 TooltipLabel.Parent = TooltipFrame
 
 local function showTooltip(text)
@@ -123,12 +126,13 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-
+-- Контейнер уведомлений
 local NotificationContainer = Instance.new("Frame")
 NotificationContainer.Name = "NotificationContainer"
 NotificationContainer.BackgroundTransparency = 1
 NotificationContainer.Position = UDim2.new(0.5, -160, 0.55, 0)
 NotificationContainer.Size = UDim2.new(0, 320, 0.4, 0)
+NotificationContainer.ZIndex = 3000
 NotificationContainer.Parent = ScreenGui
 
 local NotifLayout = Instance.new("UIListLayout")
@@ -147,6 +151,7 @@ function Library:Notify(params)
     card.BorderSizePixel = 0
     card.BackgroundTransparency = 1
     card.LayoutOrder = -os.time()
+    card.ZIndex = 3001
     card.Parent = NotificationContainer
 
     local cardCorner = Instance.new("UICorner")
@@ -168,6 +173,7 @@ function Library:Notify(params)
     titleLabel.TextSize = 13
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.BackgroundTransparency = 1
+    titleLabel.ZIndex = 3002
     titleLabel.Parent = card
 
     local msgLabel = Instance.new("TextLabel")
@@ -180,6 +186,7 @@ function Library:Notify(params)
     msgLabel.TextXAlignment = Enum.TextXAlignment.Left
     msgLabel.TextWrapped = true
     msgLabel.BackgroundTransparency = 1
+    msgLabel.ZIndex = 3002
     msgLabel.Parent = card
 
     local progressTrack = Instance.new("Frame")
@@ -187,12 +194,14 @@ function Library:Notify(params)
     progressTrack.Position = UDim2.new(0, 0, 1, -3)
     progressTrack.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     progressTrack.BorderSizePixel = 0
+    progressTrack.ZIndex = 3002
     progressTrack.Parent = card
 
     local progressBar = Instance.new("Frame")
     progressBar.Size = UDim2.new(1, 0, 1, 0)
     progressBar.BackgroundColor3 = Color3.fromRGB(0, 255, 170)
     progressBar.BorderSizePixel = 0
+    progressBar.ZIndex = 3003
     progressBar.Parent = progressTrack
 
     TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {BackgroundTransparency = 0.05}):Play()
@@ -219,10 +228,27 @@ function Library:Notify(params)
     end)
 end
 
-function Library:Watermark(text)
+-- Watermark с RGB stroke и иконкой справа
+function Library:Watermark(params)
+    local text = ""
+    local iconId = nil
+
+    if type(params) == "table" then
+        text = params.Text or params.Name or "Made By AI"
+        iconId = params.Icon or params.Image
+    else
+        text = tostring(params)
+    end
+
+    local hasIcon = iconId ~= nil and iconId ~= ""
+    local iconSize = 18
+    local padding = 8
+    local textWidth = #text * 9 + 20
+    local totalWidth = textWidth + (hasIcon and (iconSize + padding) or 0)
+
     local wmFrame = Instance.new("Frame")
     wmFrame.Name = "Watermark"
-    wmFrame.Size = UDim2.new(0, #text * 10 + 26, 0, 28)
+    wmFrame.Size = UDim2.new(0, totalWidth, 0, 28)
     wmFrame.Position = UDim2.new(0, 20, 0, 20)
     wmFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     wmFrame.BorderSizePixel = 0
@@ -238,25 +264,36 @@ function Library:Watermark(text)
     attachRainbowStroke(stroke)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.Size = UDim2.new(1, hasIcon and -(iconSize + padding + 6) or 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.Font = FONT
     lbl.Text = text
     lbl.TextColor3 = Color3.fromRGB(240, 240, 240)
     lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = wmFrame
+
+    if hasIcon then
+        local wmIcon = Instance.new("ImageLabel")
+        wmIcon.Name = "WatermarkIcon"
+        wmIcon.Size = UDim2.new(0, iconSize, 0, iconSize)
+        wmIcon.Position = UDim2.new(1, -(iconSize + 8), 0.5, -iconSize / 2)
+        wmIcon.BackgroundTransparency = 1
+        wmIcon.Image = iconId
+        wmIcon.Parent = wmFrame
+    end
 
     return wmFrame
 end
 
-
+-- Создание Окна
 function Library:Window(config)
     local windowName = config.Name or "UI"
     local windowSubtitle = config.Subtitle or ""
     local toggleBind = config.Keybind or Enum.KeyCode.RightControl
     local iconId = config.Icon or "rbxassetid://123456"
 
-    -- Увеличенный размер окна (640x500)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 640, 0, 500)
@@ -275,6 +312,7 @@ function Library:Window(config)
     MainStroke.Parent = MainFrame
     attachRainbowStroke(MainStroke)
 
+    -- TopBar
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, 0, 0, 42)
@@ -308,7 +346,6 @@ function Library:Window(config)
     SubLabel.BackgroundTransparency = 1
     SubLabel.Parent = TopBar
 
-    -- Картинка в TopBar справа
     local TopImage = Instance.new("ImageLabel")
     TopImage.Size = UDim2.new(0, 28, 0, 28)
     TopImage.Position = UDim2.new(1, -36, 0.5, -14)
@@ -326,7 +363,7 @@ function Library:Window(config)
         end
     end)
 
-    
+    -- Панель вкладок (Tabs Bar)
     local TabsBar = Instance.new("Frame")
     TabsBar.Size = UDim2.new(1, -20, 0, 32)
     TabsBar.Position = UDim2.new(0, 10, 0, 48)
@@ -358,7 +395,7 @@ function Library:Window(config)
 
     local activeTabButton = nil
 
-    
+    -- Вкладка (Tab)
     function WindowHandler:Tab(tCfg)
         local tName = tCfg.Name or "Tab"
         local tooltipText = tCfg.Tooltip or ""
@@ -392,7 +429,6 @@ function Library:Window(config)
         PageFrame.Visible = false
         PageFrame.Parent = PagesContainer
 
-        -- Сетка для двух колонок (Лево: Side 1, Право: Side 2)
         local LeftColContainer = Instance.new("ScrollingFrame")
         LeftColContainer.Size = UDim2.new(0.49, 0, 1, 0)
         LeftColContainer.Position = UDim2.new(0, 0, 0, 0)
@@ -447,11 +483,11 @@ function Library:Window(config)
             Create = {}
         }
 
-       
+        -- Колонка (Column)
         function TabObject:Column(cCfg)
             local colName = cCfg.Name or "Section"
             local colDesc = cCfg.Description or ""
-            local side = cCfg.Side or 1 -- 1 = лево, 2 = право
+            local side = cCfg.Side or 1
 
             local targetParent = (side == 2) and RightColContainer or LeftColContainer
 
@@ -522,7 +558,7 @@ function Library:Window(config)
                 Create = {}
             }
 
-            
+            -- Тоггл
             function ColumnObject:Toggle(tConfig)
                 local tName = tConfig.Name or "Toggle"
                 local state = tConfig.Default or false
@@ -581,6 +617,7 @@ function Library:Window(config)
                     Add = {}
                 }
 
+                -- Кейбинд
                 local function attachKeybind(_, kbCfg)
                     local bind = kbCfg.Default or Enum.KeyCode.E
                     local kbCallback = kbCfg.Callback or function() end
@@ -618,6 +655,7 @@ function Library:Window(config)
                     end)
                 end
 
+                -- Колорпикер: высший слой ZIndex 5000, в ScreenGui
                 local function attachColorpicker(_, cpCfg)
                     local curColor = cpCfg.Default or Color3.fromRGB(255, 255, 255)
                     local cpCallback = cpCfg.Callback or function() end
@@ -635,33 +673,33 @@ function Library:Window(config)
                     CPC.Parent = CPButton
 
                     local CPModal = Instance.new("Frame")
-                    CPModal.Size = UDim2.new(0, 170, 0, 130)
-                    CPModal.Position = UDim2.new(1, 5, 0, 0)
-                    CPModal.BackgroundColor3 = Color3.fromRGB(15, 25, 45) -- Синий оттенок
+                    CPModal.Name = "ColorpickerModal"
+                    CPModal.Size = UDim2.new(0, 175, 0, 132)
+                    CPModal.BackgroundColor3 = Color3.fromRGB(15, 24, 42)
                     CPModal.BorderSizePixel = 0
                     CPModal.Visible = false
                     CPModal.ZIndex = 5000
-                    CPModal.Parent = ToggleFrame
+                    CPModal.Parent = ScreenGui
 
                     local CPModalCorner = Instance.new("UICorner")
                     CPModalCorner.CornerRadius = UDim.new(0, 5)
                     CPModalCorner.Parent = CPModal
 
                     local CPModalStroke = Instance.new("UIStroke")
-                    CPModalStroke.Color = Color3.fromRGB(0, 160, 255)
+                    CPModalStroke.Color = Color3.fromRGB(0, 170, 255)
                     CPModalStroke.Thickness = 1.5
                     CPModalStroke.Parent = CPModal
 
                     local CPTitle = Instance.new("TextLabel")
-                    CPTitle.Size = UDim2.new(1, -10, 0, 16)
-                    CPTitle.Position = UDim2.new(0, 6, 0, 3)
+                    CPTitle.Size = UDim2.new(1, -10, 0, 18)
+                    CPTitle.Position = UDim2.new(0, 8, 0, 3)
                     CPTitle.Font = FONT
                     CPTitle.Text = "RGB COLOR"
-                    CPTitle.TextColor3 = Color3.fromRGB(120, 210, 255)
+                    CPTitle.TextColor3 = Color3.fromRGB(130, 215, 255)
                     CPTitle.TextSize = 11
                     CPTitle.TextXAlignment = Enum.TextXAlignment.Left
                     CPTitle.BackgroundTransparency = 1
-                    CPTitle.ZIndex = 51
+                    CPTitle.ZIndex = 5001
                     CPTitle.Parent = CPModal
 
                     local rVal = math.floor(curColor.R * 255)
@@ -673,7 +711,7 @@ function Library:Window(config)
                         sFrame.Size = UDim2.new(1, -12, 0, 22)
                         sFrame.Position = UDim2.new(0, 6, 0, yOffset)
                         sFrame.BackgroundTransparency = 1
-                        sFrame.ZIndex = 51
+                        sFrame.ZIndex = 5001
                         sFrame.Parent = CPModal
 
                         local sLbl = Instance.new("TextLabel")
@@ -683,16 +721,16 @@ function Library:Window(config)
                         sLbl.TextColor3 = col3
                         sLbl.TextSize = 11
                         sLbl.BackgroundTransparency = 1
-                        sLbl.ZIndex = 51
+                        sLbl.ZIndex = 5002
                         sLbl.Parent = sFrame
 
                         local bar = Instance.new("TextButton")
                         bar.Size = UDim2.new(1, -45, 0, 8)
                         bar.Position = UDim2.new(0, 20, 0.5, -4)
-                        bar.BackgroundColor3 = Color3.fromRGB(25, 40, 70)
+                        bar.BackgroundColor3 = Color3.fromRGB(24, 38, 65)
                         bar.Text = ""
                         bar.AutoButtonColor = false
-                        bar.ZIndex = 51
+                        bar.ZIndex = 5002
                         bar.Parent = sFrame
 
                         local barCorner = Instance.new("UICorner")
@@ -703,22 +741,22 @@ function Library:Window(config)
                         fill.Size = UDim2.new(defVal / 255, 0, 1, 0)
                         fill.BackgroundColor3 = col3
                         fill.BorderSizePixel = 0
-                        fill.ZIndex = 51
+                        fill.ZIndex = 5003
                         fill.Parent = bar
 
                         local numLbl = Instance.new("TextLabel")
-                        numLbl.Size = UDim2.new(0, 22, 1, 0)
+                        numLbl.Size = UDim2.new(0, 24, 1, 0)
                         numLbl.Position = UDim2.new(1, -22, 0, 0)
                         numLbl.Font = FONT
                         numLbl.Text = tostring(defVal)
-                        numLbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+                        numLbl.TextColor3 = Color3.fromRGB(210, 210, 210)
                         numLbl.TextSize = 10
                         numLbl.BackgroundTransparency = 1
-                        numLbl.ZIndex = 51
+                        numLbl.ZIndex = 5002
                         numLbl.Parent = sFrame
 
                         local dragging = false
-                        local function update(input)
+                        local function updateSlider(input)
                             local pct = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
                             local val = math.floor(pct * 255)
                             fill.Size = UDim2.new(pct, 0, 1, 0)
@@ -729,7 +767,7 @@ function Library:Window(config)
                         bar.InputBegan:Connect(function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                                 dragging = true
-                                update(input)
+                                updateSlider(input)
                             end
                         end)
 
@@ -741,7 +779,7 @@ function Library:Window(config)
 
                         UserInputService.InputChanged:Connect(function(input)
                             if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                                update(input)
+                                updateSlider(input)
                             end
                         end)
                     end
@@ -752,12 +790,29 @@ function Library:Window(config)
                         pcall(cpCallback, curColor)
                     end
 
-                    makeRGBSlider("R", Color3.fromRGB(255, 80, 80), rVal, 22, function(v) rVal = v applyRGB() end)
-                    makeRGBSlider("G", Color3.fromRGB(80, 255, 80), gVal, 48, function(v) gVal = v applyRGB() end)
-                    makeRGBSlider("B", Color3.fromRGB(80, 180, 255), bVal, 74, function(v) bVal = v applyRGB() end)
+                    makeRGBSlider("R", Color3.fromRGB(255, 80, 80), rVal, 24, function(v) rVal = v applyRGB() end)
+                    makeRGBSlider("G", Color3.fromRGB(80, 255, 80), gVal, 50, function(v) gVal = v applyRGB() end)
+                    makeRGBSlider("B", Color3.fromRGB(80, 180, 255), bVal, 76, function(v) bVal = v applyRGB() end)
+
+                    local function repositionModal()
+                        local btnPos = CPButton.AbsolutePosition
+                        local btnSize = CPButton.AbsoluteSize
+                        CPModal.Position = UDim2.new(0, btnPos.X + btnSize.X + 8, 0, btnPos.Y - 10)
+                    end
 
                     CPButton.MouseButton1Click:Connect(function()
+                        repositionModal()
                         CPModal.Visible = not CPModal.Visible
+                    end)
+
+                    CPButton:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+                        if CPModal.Visible then
+                            repositionModal()
+                        end
+                    end)
+
+                    ToggleFrame.Destroying:Connect(function()
+                        CPModal:Destroy()
                     end)
                 end
 
@@ -772,7 +827,7 @@ function Library:Window(config)
                 return ToggleObj
             end
 
-            
+            -- Слайдер
             function ColumnObject:Slider(sCfg)
                 local sName = sCfg.Name or "Slider"
                 local min = sCfg.Min or 0
@@ -859,7 +914,7 @@ function Library:Window(config)
                 end)
             end
 
-            
+            -- Дропдаун
             function ColumnObject:Dropdown(dCfg)
                 local dName = dCfg.Name or "Dropdown"
                 local list = dCfg.List or {}
@@ -923,7 +978,6 @@ function Library:Window(config)
                 end)
             end
 
-     
             ColumnObject.Create.Toggle = function(_, cfg) return ColumnObject:Toggle(cfg) end
             ColumnObject.Create.toggle = ColumnObject.Create.Toggle
             ColumnObject.Add.Toggle = ColumnObject.Create.Toggle
@@ -957,8 +1011,16 @@ Library.Create = {
 }
 
 Library.Add = {
-    Watermark = function(_, text) return Library:Watermark(text) end,
-    watermark = function(_, text) return Library:Watermark(text) end
+    Watermark = function(_, p1, p2)
+        if type(p1) == "table" then
+            return Library:Watermark(p1)
+        else
+            return Library:Watermark({ Text = p1, Icon = p2 })
+        end
+    end,
+    watermark = function(self, p1, p2)
+        return self.Watermark(self, p1, p2)
+    end
 }
 
 return Library
