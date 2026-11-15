@@ -203,7 +203,7 @@ function Library:Notify(options)
 end
 
 function Library:CreateWatermark(options)
-    local IconId = options.Icon or "rbxassetid://7733960981"
+    local IconId = options.Icon or "rbxassetid://77191382463682"
     local Text = options.Text or "Arcade UI | FPS: 60"
 
     local WmFrame = Instance.new("Frame")
