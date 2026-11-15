@@ -310,15 +310,6 @@ function Library.Create:Window(options)
     TopCorner.CornerRadius = UDim.new(0, 8)
     TopCorner.Parent = TopBar
 
-    -- Перекрываем нижнее скругление TopBar, чтобы стык был ровным
-    local TopBarBottomFill = Instance.new("Frame")
-    TopBarBottomFill.Size = UDim2.new(1, 0, 0, 10)
-    TopBarBottomFill.Position = UDim2.new(0, 0, 1, -10)
-    TopBarBottomFill.BackgroundColor3 = Library.Theme.Secondary
-    TopBarBottomFill.BorderSizePixel = 0
-    TopBarBottomFill.ZIndex = 0
-    TopBarBottomFill.Parent = TopBar
-
     local TopLayout = Instance.new("UIListLayout", TopLeftContainer)
     TopLayout.FillDirection = Enum.FillDirection.Horizontal
     TopLayout.VerticalAlignment = Enum.VerticalAlignment.Center
