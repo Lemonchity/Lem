@@ -298,7 +298,7 @@ function Library.Create:Window(options)
     CenterGlow.ZIndex = 0
     CenterGlow.Parent = MainFrame
 
-    -- Топ-бар с авто-выравниванием Title и Subtitle (исправлено наложение)
+    -- Топ-бар с фиксом верхних углов (UICorner + заплатка снизу)
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundColor3 = Library.Theme.Secondary
@@ -306,11 +306,18 @@ function Library.Create:Window(options)
     TopBar.Parent = MainFrame
     MakeDraggable(MainFrame, TopBar)
 
-    local TopLeftContainer = Instance.new("Frame")
-    TopLeftContainer.Size = UDim2.new(1, -24, 1, 0)
-    TopLeftContainer.Position = UDim2.new(0, 12, 0, 0)
-    TopLeftContainer.BackgroundTransparency = 1
-    TopLeftContainer.Parent = TopBar
+    local TopCorner = Instance.new("UICorner")
+    TopCorner.CornerRadius = UDim.new(0, 8)
+    TopCorner.Parent = TopBar
+
+    -- Перекрываем нижнее скругление TopBar, чтобы стык был ровным
+    local TopBarBottomFill = Instance.new("Frame")
+    TopBarBottomFill.Size = UDim2.new(1, 0, 0, 10)
+    TopBarBottomFill.Position = UDim2.new(0, 0, 1, -10)
+    TopBarBottomFill.BackgroundColor3 = Library.Theme.Secondary
+    TopBarBottomFill.BorderSizePixel = 0
+    TopBarBottomFill.ZIndex = 0
+    TopBarBottomFill.Parent = TopBar
 
     local TopLayout = Instance.new("UIListLayout", TopLeftContainer)
     TopLayout.FillDirection = Enum.FillDirection.Horizontal
