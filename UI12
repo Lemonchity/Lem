@@ -6,7 +6,6 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
 local Library = {
     Flags = {},
@@ -23,10 +22,10 @@ local Library = {
         Accent2 = Color3.fromRGB(0, 210, 255)
     },
     MenuKeybind = Enum.KeyCode.RightControl,
-    FolderName = "ArcadeUIConfigs"
+    FolderName = "ArcadeUIConfigs",
+    Create = {}
 }
 
--- Утилита для создания анимаций
 local function Tween(obj, props, time, style, dir)
     local info = TweenInfo.new(time or 0.25, style or Enum.EasingStyle.Quart, dir or Enum.EasingDirection.Out)
     local tween = TweenService:Create(obj, info, props)
@@ -34,7 +33,6 @@ local function Tween(obj, props, time, style, dir)
     return tween
 end
 
--- Утилита для эффекта "змейки" (переливающийся UIStroke)
 local function ApplySnakeStroke(parent, thickness)
     local stroke = Instance.new("UIStroke")
     stroke.Thickness = thickness or 2
@@ -64,7 +62,6 @@ local function ApplySnakeStroke(parent, thickness)
     return stroke
 end
 
--- Утилита для перетаскивания окон
 local function MakeDraggable(frame, handle)
     local dragging, dragInput, dragStart, startPos
     handle = handle or frame
@@ -98,7 +95,6 @@ local function MakeDraggable(frame, handle)
     end)
 end
 
--- Главный ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ArcadeUI_" .. HttpService:GenerateGUID(false)
 ScreenGui.ResetOnSpawn = false
@@ -107,7 +103,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 -- ==========================================
--- СИСТЕМА НОТИФИКАЦИЙ (NOTIFY)
+-- НОТИФИКАЦИИ (NOTIFY)
 -- ==========================================
 local ActiveNotifications = {}
 
@@ -116,7 +112,6 @@ function Library:Notify(options)
     local Text = options.Text or ""
     local Duration = options.Duration or 4
 
-    -- Сдвигаем старые уведомления вниз
     for i, notif in ipairs(ActiveNotifications) do
         local targetY = 0.56 + (i * 0.085)
         Tween(notif, {Position = UDim2.new(0.5, 0, targetY, 0)}, 0.35, Enum.EasingStyle.Back)
@@ -125,14 +120,13 @@ function Library:Notify(options)
     local NotifFrame = Instance.new("Frame")
     NotifFrame.Size = UDim2.new(0, 300, 0, 56)
     NotifFrame.AnchorPoint = Vector2.new(0.5, 0)
-    NotifFrame.Position = UDim2.new(0.5, 0, 0.52, 0) -- Появление чуть ниже центра
+    NotifFrame.Position = UDim2.new(0.5, 0, 0.52, 0)
     NotifFrame.BackgroundColor3 = Library.Theme.Background
     NotifFrame.BackgroundTransparency = 1
     NotifFrame.ClipsDescendants = true
     NotifFrame.Parent = ScreenGui
 
-    local Corner = Instance.new("UICorner", NotifFrame)
-    Corner.CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", NotifFrame).CornerRadius = UDim.new(0, 8)
     ApplySnakeStroke(NotifFrame, 1.5)
 
     local TitleLabel = Instance.new("TextLabel")
@@ -157,7 +151,6 @@ function Library:Notify(options)
     DescLabel.Text = ""
     DescLabel.Parent = NotifFrame
 
-    -- Линия таймера снизу
     local TimerBar = Instance.new("Frame")
     TimerBar.Size = UDim2.new(1, 0, 0, 3)
     TimerBar.Position = UDim2.new(0, 0, 1, -3)
@@ -167,10 +160,8 @@ function Library:Notify(options)
 
     table.insert(ActiveNotifications, 1, NotifFrame)
 
-    -- Анимация появления
     Tween(NotifFrame, {Position = UDim2.new(0.5, 0, 0.56, 0), BackgroundTransparency = 0.05}, 0.35, Enum.EasingStyle.Back)
 
-    -- Эффект печатанья (Typewriter)
     task.spawn(function()
         for i = 1, #Text do
             if not DescLabel.Parent then break end
@@ -179,13 +170,11 @@ function Library:Notify(options)
         end
     end)
 
-    -- Анимация линии времени
     local timerTween = Tween(TimerBar, {Size = UDim2.new(0, 0, 0, 3)}, Duration, Enum.EasingStyle.Linear)
     timerTween.Completed:Connect(function()
         local idx = table.find(ActiveNotifications, NotifFrame)
         if idx then table.remove(ActiveNotifications, idx) end
 
-        -- Возвращаем оставшиеся наверх
         for i, notif in ipairs(ActiveNotifications) do
             local targetY = 0.56 + ((i - 1) * 0.085)
             Tween(notif, {Position = UDim2.new(0.5, 0, targetY, 0)}, 0.3)
@@ -234,7 +223,6 @@ function Library:CreateWatermark(options)
     WmText.Parent = WmFrame
     table.insert(Library.ThemeObjects.Text, WmText)
 
-    -- Авто-подгон ширины под текст
     local function UpdateWidth()
         WmFrame.Size = UDim2.new(0, WmText.TextBounds.X + 48, 0, 34)
     end
@@ -249,18 +237,15 @@ function Library:CreateWatermark(options)
 end
 
 -- ==========================================
--- СОЗДАНИЕ ОКНА (CREATE:WINDOW)
+-- СОЗДАНИЕ ОКНА (LIBRARY.CREATE:WINDOW)
 -- ==========================================
-local Create = {}
-
-function Create:Window(options)
+function Library.Create:Window(options)
     local Name = options.Name or "Lol"
     local Subtitle = options.Subtitle or "ByAI"
     local IconId = options.Icon or "rbxassetid://7733960981"
     local ToggleIconId = options.MobileIcon or "rbxassetid://7733960981"
     Library.MenuKeybind = options.Keybind or Enum.KeyCode.RightControl
 
-    -- Мобильная кнопка открытия/закрытия UI
     local MobileBtn = Instance.new("ImageButton")
     MobileBtn.Size = UDim2.new(0, 48, 0, 48)
     MobileBtn.Position = UDim2.new(0, 20, 0.5, -24)
@@ -271,7 +256,6 @@ function Create:Window(options)
     ApplySnakeStroke(MobileBtn, 2)
     MakeDraggable(MobileBtn)
 
-    -- Главное окно
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 560, 0, 380)
     MainFrame.Position = UDim2.new(0.5, -280, 0.5, -190)
@@ -283,18 +267,16 @@ function Create:Window(options)
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
     ApplySnakeStroke(MainFrame, 2.2)
 
-    -- Подсветка по центру UI (Эффект света)
     local CenterGlow = Instance.new("ImageLabel")
     CenterGlow.Size = UDim2.new(1.2, 0, 1.2, 0)
     CenterGlow.Position = UDim2.new(-0.1, 0, -0.1, 0)
     CenterGlow.BackgroundTransparency = 1
-    CenterGlow.Image = "rbxassetid://5028857084" -- Радиальное свечение
+    CenterGlow.Image = "rbxassetid://5028857084"
     CenterGlow.ImageColor3 = Library.Theme.Accent
     CenterGlow.ImageTransparency = 0.86
     CenterGlow.ZIndex = 0
     CenterGlow.Parent = MainFrame
 
-    -- Топ-бар
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 42)
     TopBar.BackgroundColor3 = Library.Theme.Secondary
@@ -332,7 +314,6 @@ function Create:Window(options)
     SubLabel.Text = "| " .. Subtitle
     SubLabel.Parent = TopBar
 
-    -- Логика скрытия / открытия UI с анимацией
     local isOpen = true
     local function ToggleUI()
         isOpen = not isOpen
@@ -354,7 +335,6 @@ function Create:Window(options)
         end
     end)
 
-    -- Боковая панель вкладок
     local TabSidebar = Instance.new("ScrollingFrame")
     TabSidebar.Size = UDim2.new(0, 140, 1, -50)
     TabSidebar.Position = UDim2.new(0, 6, 0, 46)
@@ -365,7 +345,6 @@ function Create:Window(options)
     local TabListLayout = Instance.new("UIListLayout", TabSidebar)
     TabListLayout.Padding = UDim.new(0, 6)
 
-    -- Контейнер страниц
     local PagesFolder = Instance.new("Frame")
     PagesFolder.Size = UDim2.new(1, -158, 1, -52)
     PagesFolder.Position = UDim2.new(0, 152, 0, 46)
@@ -375,9 +354,6 @@ function Create:Window(options)
     local WindowObj = {}
     local FirstTab = true
 
-    -- ==========================================
-    -- СОЗДАНИЕ ВКЛАДКИ (TAB)
-    -- ==========================================
     function WindowObj:Tab(tabName)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, -6, 0, 34)
@@ -425,10 +401,9 @@ function Create:Window(options)
             Tween(TabBtn, {BackgroundColor3 = Library.Theme.Accent}, 0.2)
         end)
 
-        -- Объект элементов внутри вкладки
         local Elements = {}
 
-        -- 1. TOGGLE (С поддержкой Add:Colorpicker и Add:Keybind)
+        -- 1. TOGGLE
         function Elements:Toggle(cfg)
             local tName = cfg.Name or "Toggle"
             local state = cfg.Default or false
@@ -483,13 +458,11 @@ function Create:Window(options)
             Library.Flags[tName] = state
             local rightOffset = -58
 
-            -- Возвращаем контроллер с методами Add (Colorpicker / Keybind)
             local ToggleController = {
                 Set = SetState,
                 Add = {}
             }
 
-            -- Привязка Colorpicker к тогглу
             function ToggleController.Add:Colorpicker(cpCfg)
                 local cpDefault = cpCfg.Default or Color3.fromRGB(255, 0, 100)
                 local cpCallback = cpCfg.Callback or function() end
@@ -503,7 +476,6 @@ function Create:Window(options)
                 Instance.new("UICorner", ColorBtn).CornerRadius = UDim.new(0, 4)
                 rightOffset = rightOffset - 30
 
-                -- Простая палитра циклических + RGB ползунков при клике
                 local PickerOpen = false
                 local PickerFrame = Instance.new("Frame")
                 PickerFrame.Size = UDim2.new(1, 0, 0, 0)
@@ -562,7 +534,6 @@ function Create:Window(options)
                 return ToggleController
             end
 
-            -- Привязка Keybind к тогглу
             function ToggleController.Add:Keybind(kbCfg)
                 local boundKey = kbCfg.Default
                 local waiting = false
@@ -752,7 +723,7 @@ function Create:Window(options)
             Library.Flags[dName] = default
         end
 
-        -- 4. BUTTON + ПРИВЯЗКА КЕЙБИНДА (ПКМ по кнопке меняет бинд)
+        -- 4. BUTTON
         function Elements:Button(cfg)
             local bName = cfg.Name or "Button"
             local boundKey = cfg.Keybind
@@ -851,12 +822,11 @@ function Create:Window(options)
     end
 
     -- ==========================================
-    -- ВКЛАДКА КОНФИГОВ И КАСТОМИЗАЦИИ (ADDCONFTAB)
+    -- ВКЛАДКА КОНФИГОВ (ADDCONFTAB)
     -- ==========================================
     function WindowObj:AddConfTab()
         local ConfElements = WindowObj:Tab("Config & UI")
 
-        -- Смена кейбинда меню
         ConfElements:Button({
             Name = "Menu Keybind (" .. Library.MenuKeybind.Name .. ")",
             Callback = function()
@@ -872,7 +842,6 @@ function Create:Window(options)
             end
         })
 
-        -- Кастомизация цветов UI
         local bgToggle = ConfElements:Toggle({Name = "Custom Background Theme", Default = true})
         bgToggle.Add:Colorpicker({
             Default = Library.Theme.Background,
@@ -913,7 +882,6 @@ function Create:Window(options)
             end
         })
 
-        -- Система сохранения/загрузки конфигов
         local configName = "default"
         ConfElements:TextBox({
             Name = "Config Name",
@@ -962,3 +930,5 @@ function Create:Window(options)
     return WindowObj
 end
 
+-- Обязательно возвращаем таблицу Library для loadstring
+return Library
