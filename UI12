@@ -9,6 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local Library = {
     Flags = {},
+    FlagSetters = {}, -- Функции для визуального обновления элементов при загрузке конфига
     ThemeObjects = {
         Background = {},
         Text = {},
@@ -121,6 +122,9 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
+-- ==========================================
+-- НОТИФИКАЦИИ (NOTIFY)
+-- ==========================================
 local ActiveNotifications = {}
 
 function Library:Notify(options)
@@ -202,8 +206,11 @@ function Library:Notify(options)
     end)
 end
 
+-- ==========================================
+-- ВАТЕРМАРК (WATERMARK)
+-- ==========================================
 function Library:CreateWatermark(options)
-    local IconId = options.Icon or "rbxassetid://77191382463682"
+    local IconId = options.Icon or "rbxassetid://7733960981"
     local Text = options.Text or "Arcade UI | FPS: 60"
 
     local WmFrame = Instance.new("Frame")
@@ -249,11 +256,14 @@ function Library:CreateWatermark(options)
     }
 end
 
+-- ==========================================
+-- СОЗДАНИЕ ОКНА (LINORIA STYLE + COLUMNS)
+-- ==========================================
 function Library.Create:Window(options)
     local Name = options.Name or "Lol"
     local Subtitle = options.Subtitle or "ByAI"
     local IconId = options.Icon or "rbxassetid://7733960981"
-    local ToggleIconId = options.MobileIcon or "rbxassetid://7733960981"
+    local ToggleIconId = options.MobilebuttonIcon or options.MobileIcon or "rbxassetid://7733960981"
     Library.MenuKeybind = options.Keybind or Enum.KeyCode.RightControl
 
     local WinWidth, WinHeight = 680, 470
@@ -289,6 +299,7 @@ function Library.Create:Window(options)
     CenterGlow.ZIndex = 0
     CenterGlow.Parent = MainFrame
 
+    -- Топ-бар
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundColor3 = Library.Theme.Secondary
@@ -352,6 +363,7 @@ function Library.Create:Window(options)
     SubLabel.LayoutOrder = 3
     SubLabel.Parent = TopLeftContainer
 
+    -- Верхняя панель вкладок (Linoria Style)
     local TabBar = Instance.new("ScrollingFrame")
     TabBar.Size = UDim2.new(1, -16, 0, 34)
     TabBar.Position = UDim2.new(0, 8, 0, 44)
@@ -376,6 +388,7 @@ function Library.Create:Window(options)
     TabBarPad.PaddingLeft = UDim.new(0, 6)
     TabBarPad.PaddingRight = UDim.new(0, 6)
 
+    -- Контейнер страниц вкладок
     local PagesFolder = Instance.new("Frame")
     PagesFolder.Size = UDim2.new(1, -16, 1, -88)
     PagesFolder.Position = UDim2.new(0, 8, 0, 82)
@@ -426,6 +439,7 @@ function Library.Create:Window(options)
         Page.Visible = FirstTab
         Page.Parent = PagesFolder
 
+        -- Левая колонка (Side = 2)
         local LeftScroll = Instance.new("ScrollingFrame")
         LeftScroll.Size = UDim2.new(0.5, -5, 1, 0)
         LeftScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -443,6 +457,7 @@ function Library.Create:Window(options)
         LeftPad.PaddingLeft = UDim.new(0, 2)
         LeftPad.PaddingRight = UDim.new(0, 4)
 
+        -- Правая колонка (Side = 1)
         local RightScroll = Instance.new("ScrollingFrame")
         RightScroll.Size = UDim2.new(0.5, -5, 1, 0)
         RightScroll.Position = UDim2.new(0.5, 5, 0, 0)
@@ -480,6 +495,7 @@ function Library.Create:Window(options)
 
         local TabObj = {}
 
+        -- Функция создания GroupBox / Column (Side = 1 -> Право, Side = 2 -> Лево)
         function TabObj:AddColumn(colCfg)
             local cName = colCfg.Name or "Section"
             local cDesc = colCfg.Description or ""
@@ -561,8 +577,11 @@ function Library.Create:Window(options)
                 return orderCounter
             end
 
+            -- 1. TOGGLE + COLORPICKER + KEYBIND
             function Elements:Toggle(cfg)
                 local tName = cfg.Name or "Toggle"
+                local flag = cfg.Flag or tName
+                local saveFlag = (cfg.IgnoreConfig ~= true)
                 local state = cfg.Default or false
                 local callback = cfg.Callback or function() end
 
@@ -603,7 +622,7 @@ function Library.Create:Window(options)
 
                 local function SetState(val)
                     state = val
-                    Library.Flags[tName] = state
+                    if saveFlag then Library.Flags[flag] = state end
                     Tween(SwitchBg, {BackgroundColor3 = state and Library.Theme.Accent or Color3.fromRGB(45, 45, 58)}, 0.2)
                     Tween(Knob, {Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}, 0.2)
                     callback(state)
@@ -613,7 +632,13 @@ function Library.Create:Window(options)
                     SetState(not state)
                 end)
 
-                Library.Flags[tName] = state
+                if saveFlag then
+                    Library.Flags[flag] = state
+                    Library.FlagSetters[flag] = function(val)
+                        if type(val) == "boolean" then SetState(val) end
+                    end
+                end
+
                 local rightOffset = -50
 
                 local ToggleController = {
@@ -621,7 +646,9 @@ function Library.Create:Window(options)
                     Add = {}
                 }
 
+                -- COLORPICKER
                 function ToggleController.Add:Colorpicker(cpCfg)
+                    local cpFlag = cpCfg.Flag or (flag .. "_Color")
                     local currentColor = cpCfg.Default or Color3.fromRGB(0, 41, 203)
                     local cpCallback = cpCfg.Callback or function() end
 
@@ -751,7 +778,7 @@ function Library.Create:Window(options)
                     local function ApplyColor(newCol, updateInputs)
                         currentColor = newCol
                         ColorBtn.BackgroundColor3 = newCol
-                        Library.Flags[tName .. "_Color"] = newCol
+                        if saveFlag then Library.Flags[cpFlag] = ColorToHex(newCol) end
                         if updateInputs then
                             RBox.Text = tostring(math.floor(newCol.R * 255 + 0.5))
                             GBox.Text = tostring(math.floor(newCol.G * 255 + 0.5))
@@ -829,11 +856,21 @@ function Library.Create:Window(options)
                         end
                     end)
 
-                    Library.Flags[tName .. "_Color"] = currentColor
+                    if saveFlag then
+                        Library.Flags[cpFlag] = ColorToHex(currentColor)
+                        Library.FlagSetters[cpFlag] = function(val)
+                            if type(val) == "string" then
+                                local parsed = HexToColor(val)
+                                if parsed then ApplyColor(parsed, true) end
+                            end
+                        end
+                    end
+
                     return ToggleController
                 end
 
                 function ToggleController.Add:Keybind(kbCfg)
+                    local kbFlag = kbCfg.Flag or (flag .. "_Keybind")
                     local boundKey = kbCfg.Default
                     local waiting = false
 
@@ -849,6 +886,12 @@ function Library.Create:Window(options)
                     Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 4)
                     rightOffset = rightOffset - 54
 
+                    local function SetBind(keyEnum)
+                        boundKey = keyEnum
+                        KeyBtn.Text = boundKey and boundKey.Name or "None"
+                        if saveFlag then Library.Flags[kbFlag] = boundKey and boundKey.Name or "None" end
+                    end
+
                     KeyBtn.MouseButton1Click:Connect(function()
                         waiting = true
                         KeyBtn.Text = "..."
@@ -856,8 +899,7 @@ function Library.Create:Window(options)
 
                     UserInputService.InputBegan:Connect(function(input, gpe)
                         if waiting and input.UserInputType == Enum.UserInputType.Keyboard then
-                            boundKey = (input.KeyCode == Enum.KeyCode.Escape) and nil or input.KeyCode
-                            KeyBtn.Text = boundKey and boundKey.Name or "None"
+                            SetBind((input.KeyCode == Enum.KeyCode.Escape) and nil or input.KeyCode)
                             waiting = false
                             return
                         end
@@ -866,14 +908,29 @@ function Library.Create:Window(options)
                         end
                     end)
 
+                    if saveFlag then
+                        Library.Flags[kbFlag] = boundKey and boundKey.Name or "None"
+                        Library.FlagSetters[kbFlag] = function(val)
+                            if type(val) == "string" then
+                                if val == "None" then
+                                    SetBind(nil)
+                                elseif Enum.KeyCode[val] then
+                                    SetBind(Enum.KeyCode[val])
+                                end
+                            end
+                        end
+                    end
+
                     return ToggleController
                 end
 
                 return ToggleController
             end
 
+            -- 2. SLIDER
             function Elements:Slider(cfg)
                 local sName = cfg.Name or "Slider"
+                local flag = cfg.Flag or sName
                 local min = cfg.Min or 0
                 local max = cfg.Max or 100
                 local default = math.clamp(cfg.Default or min, min, max)
@@ -924,14 +981,20 @@ function Library.Create:Window(options)
                 Fill.Parent = BarBg
                 Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
 
+                local function SetValue(val)
+                    val = math.clamp(math.floor(val), min, max)
+                    local pct = (val - min) / (max - min)
+                    ValLabel.Text = tostring(val)
+                    Library.Flags[flag] = val
+                    Tween(Fill, {Size = UDim2.new(pct, 0, 1, 0)}, 0.08)
+                    callback(val)
+                end
+
                 local dragging = false
                 local function UpdateSlider(input)
                     local pct = math.clamp((input.Position.X - BarBg.AbsolutePosition.X) / BarBg.AbsoluteSize.X, 0, 1)
-                    local val = math.floor(min + (max - min) * pct)
-                    ValLabel.Text = tostring(val)
-                    Library.Flags[sName] = val
-                    Tween(Fill, {Size = UDim2.new(pct, 0, 1, 0)}, 0.08)
-                    callback(val)
+                    local val = min + (max - min) * pct
+                    SetValue(val)
                 end
 
                 BarBg.InputBegan:Connect(function(input)
@@ -951,11 +1014,17 @@ function Library.Create:Window(options)
                     end
                 end)
 
-                Library.Flags[sName] = default
+                Library.Flags[flag] = default
+                Library.FlagSetters[flag] = function(val)
+                    if type(val) == "number" then SetValue(val) end
+                end
             end
 
+            -- 3. DROPDOWN
             function Elements:Dropdown(cfg)
                 local dName = cfg.Name or "Dropdown"
+                local flag = cfg.Flag or dName
+                local saveFlag = (cfg.IgnoreConfig ~= true)
                 local list = cfg.Options or {}
                 local default = cfg.Default or list[1] or "None"
                 local callback = cfg.Callback or function() end
@@ -990,6 +1059,12 @@ function Library.Create:Window(options)
                 Arrow.Text = "v"
                 Arrow.Parent = Container
 
+                local function SelectOption(opt)
+                    HeaderBtn.Text = "  " .. dName .. ": " .. tostring(opt)
+                    if saveFlag then Library.Flags[flag] = opt end
+                    callback(opt)
+                end
+
                 local OptionButtons = {}
 
                 local function BuildOptions(newList)
@@ -1010,12 +1085,10 @@ function Library.Create:Window(options)
                         Instance.new("UICorner", OptBtn).CornerRadius = UDim.new(0, 4)
 
                         OptBtn.MouseButton1Click:Connect(function()
-                            HeaderBtn.Text = "  " .. dName .. ": " .. tostring(opt)
-                            Library.Flags[dName] = opt
+                            SelectOption(opt)
                             open = false
                             Tween(Arrow, {Rotation = 0}, 0.2)
                             Tween(Container, {Size = UDim2.new(1, 0, 0, 32)}, 0.25)
-                            callback(opt)
                         end)
 
                         table.insert(OptionButtons, OptBtn)
@@ -1031,14 +1104,19 @@ function Library.Create:Window(options)
                     Tween(Container, {Size = UDim2.new(1, 0, 0, targetH)}, 0.25)
                 end)
 
-                Library.Flags[dName] = default
+                if saveFlag then
+                    Library.Flags[flag] = default
+                    Library.FlagSetters[flag] = function(val)
+                        if table.find(list, val) then SelectOption(val) end
+                    end
+                end
 
                 return {
                     Refresh = function(_, newOptions, newDefault)
                         BuildOptions(newOptions)
                         if newDefault then
                             HeaderBtn.Text = "  " .. dName .. ": " .. tostring(newDefault)
-                            Library.Flags[dName] = newDefault
+                            if saveFlag then Library.Flags[flag] = newDefault end
                         end
                         if open then
                             Tween(Container, {Size = UDim2.new(1, 0, 0, 38 + #newOptions * 28)}, 0.2)
@@ -1047,6 +1125,7 @@ function Library.Create:Window(options)
                 }
             end
 
+            -- 4. BUTTON
             function Elements:Button(cfg)
                 local bName = cfg.Name or "Button"
                 local boundKey = cfg.Keybind
@@ -1098,8 +1177,11 @@ function Library.Create:Window(options)
                 end)
             end
 
+            -- 5. TEXTBOX
             function Elements:TextBox(cfg)
                 local tbName = cfg.Name or "Input"
+                local flag = cfg.Flag or tbName
+                local saveFlag = (cfg.IgnoreConfig ~= true)
                 local placeholder = cfg.Placeholder or "Type..."
                 local callback = cfg.Callback or function() end
 
@@ -1137,9 +1219,20 @@ function Library.Create:Window(options)
                 Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
 
                 Box.FocusLost:Connect(function(enterPressed)
-                    Library.Flags[tbName] = Box.Text
+                    if saveFlag then Library.Flags[flag] = Box.Text end
                     callback(Box.Text, enterPressed)
                 end)
+
+                if saveFlag then
+                    Library.Flags[flag] = ""
+                    Library.FlagSetters[flag] = function(val)
+                        if type(val) == "string" then
+                            Box.Text = val
+                            Library.Flags[flag] = val
+                            callback(val, false)
+                        end
+                    end
+                end
             end
 
             return Elements
@@ -1148,6 +1241,9 @@ function Library.Create:Window(options)
         return TabObj
     end
 
+    -- ==========================================
+    -- ВКЛАДКА КОНФИГОВ (С СОХРАНЕНИЕМ ПО ФЛАГАМ)
+    -- ==========================================
     function WindowObj:AddConfTab()
         local ConfTab = WindowObj:Tab("Config")
 
@@ -1172,7 +1268,7 @@ function Library.Create:Window(options)
             end
         })
 
-        local bgToggle = ThemeCol:Toggle({Name = "Background Theme", Default = true})
+        local bgToggle = ThemeCol:Toggle({Name = "Background Theme", Default = true, IgnoreConfig = true})
         bgToggle.Add:Colorpicker({
             Default = Library.Theme.Background,
             Callback = function(col)
@@ -1183,7 +1279,7 @@ function Library.Create:Window(options)
             end
         })
 
-        local txtToggle = ThemeCol:Toggle({Name = "Text Color", Default = true})
+        local txtToggle = ThemeCol:Toggle({Name = "Text Color", Default = true, IgnoreConfig = true})
         txtToggle.Add:Colorpicker({
             Default = Library.Theme.Text,
             Callback = function(col)
@@ -1194,7 +1290,7 @@ function Library.Create:Window(options)
             end
         })
 
-        local accToggle = ThemeCol:Toggle({Name = "Snake Accent", Default = true})
+        local accToggle = ThemeCol:Toggle({Name = "Snake Accent", Default = true, IgnoreConfig = true})
         accToggle.Add:Colorpicker({
             Default = Library.Theme.Accent,
             Callback = function(col)
@@ -1248,6 +1344,7 @@ function Library.Create:Window(options)
             Name = "Saved Configs",
             Options = initialConfigs,
             Default = selectedConfig,
+            IgnoreConfig = true,
             Callback = function(opt)
                 selectedConfig = opt
                 configName = opt
@@ -1257,6 +1354,7 @@ function Library.Create:Window(options)
         CfgCol:TextBox({
             Name = "New Config Name",
             Placeholder = "default",
+            IgnoreConfig = true,
             Callback = function(txt)
                 if txt ~= "" then configName = txt end
             end
@@ -1268,8 +1366,10 @@ function Library.Create:Window(options)
                 if writefile and makefolder then
                     if not isfolder(Library.FolderName) then makefolder(Library.FolderName) end
                     local data = {}
-                    for k, v in pairs(Library.Flags) do
-                        if typeof(v) ~= "Color3" then data[k] = v end
+                    for flagKey, flagValue in pairs(Library.Flags) do
+                        if typeof(flagValue) ~= "Color3" and typeof(flagValue) ~= "EnumItem" then
+                            data[flagKey] = flagValue
+                        end
                     end
                     writefile(Library.FolderName .. "/" .. configName .. ".json", HttpService:JSONEncode(data))
                     ConfigDropdown:Refresh(GetConfigList(), configName)
@@ -1289,8 +1389,11 @@ function Library.Create:Window(options)
                     local path = Library.FolderName .. "/" .. target .. ".json"
                     if isfile(path) then
                         local decoded = HttpService:JSONDecode(readfile(path))
-                        for k, v in pairs(decoded) do
-                            Library.Flags[k] = v
+                        for flagKey, flagValue in pairs(decoded) do
+                            Library.Flags[flagKey] = flagValue
+                            if Library.FlagSetters[flagKey] then
+                                Library.FlagSetters[flagKey](flagValue)
+                            end
                         end
                         Library:Notify({Title = "Config Loaded", Text = "Loaded '" .. target .. "'!", Duration = 3})
                     else
