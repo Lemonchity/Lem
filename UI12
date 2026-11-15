@@ -310,6 +310,21 @@ function Library.Create:Window(options)
     TopCorner.CornerRadius = UDim.new(0, 8)
     TopCorner.Parent = TopBar
 
+    local TopBarBottomFill = Instance.new("Frame")
+    TopBarBottomFill.Size = UDim2.new(1, 0, 0, 10)
+    TopBarBottomFill.Position = UDim2.new(0, 0, 1, -10)
+    TopBarBottomFill.BackgroundColor3 = Library.Theme.Secondary
+    TopBarBottomFill.BorderSizePixel = 0
+    TopBarBottomFill.ZIndex = 0
+    TopBarBottomFill.Parent = TopBar
+
+    local TopLeftContainer = Instance.new("Frame")
+    TopLeftContainer.Size = UDim2.new(1, -24, 1, 0)
+    TopLeftContainer.Position = UDim2.new(0, 12, 0, 0)
+    TopLeftContainer.BackgroundTransparency = 1
+    TopLeftContainer.ZIndex = 2
+    TopLeftContainer.Parent = TopBar
+
     local TopLayout = Instance.new("UIListLayout", TopLeftContainer)
     TopLayout.FillDirection = Enum.FillDirection.Horizontal
     TopLayout.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -490,6 +505,7 @@ function Library.Create:Window(options)
             GroupBox.Size = UDim2.new(1, 0, 0, 0)
             GroupBox.AutomaticSize = Enum.AutomaticSize.Y
             GroupBox.BackgroundColor3 = Library.Theme.Card
+            GroupBox.ClipsDescendants = true
             GroupBox.Parent = targetParent
             Instance.new("UICorner", GroupBox).CornerRadius = UDim.new(0, 6)
 
@@ -560,7 +576,7 @@ function Library.Create:Window(options)
                 return orderCounter
             end
 
-            -- 1. TOGGLE + COLORPICKER (КАК НА СКРИНШОТЕ) + KEYBIND
+            -- 1. TOGGLE + COLORPICKER + KEYBIND
             function Elements:Toggle(cfg)
                 local tName = cfg.Name or "Toggle"
                 local state = cfg.Default or false
@@ -651,7 +667,7 @@ function Library.Create:Window(options)
                     pStroke.Color = Color3.fromRGB(58, 66, 82)
                     pStroke.Thickness = 1
 
-                    -- 2D Палитра (Hue слева направо + белый сверху / темный снизу)
+                    -- 2D Палитра
                     local PaletteFrame = Instance.new("TextButton")
                     PaletteFrame.Size = UDim2.new(1, -16, 0, 130)
                     PaletteFrame.Position = UDim2.new(0, 8, 0, 8)
@@ -673,7 +689,6 @@ function Library.Create:Window(options)
                         ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))
                     })
 
-                    -- Наложение градиента яркости/белого сверху вниз (как на скриншоте)
                     local ValueOverlay = Instance.new("Frame")
                     ValueOverlay.Size = UDim2.new(1, 0, 1, 0)
                     ValueOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -693,7 +708,6 @@ function Library.Create:Window(options)
                         NumberSequenceKeypoint.new(1, 0.15)
                     })
 
-                    -- Белое кольцо-курсор на палитре
                     local CursorRing = Instance.new("Frame")
                     CursorRing.Size = UDim2.new(0, 12, 0, 12)
                     CursorRing.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -705,7 +719,6 @@ function Library.Create:Window(options)
                     RingStroke.Color = Color3.fromRGB(255, 255, 255)
                     RingStroke.Thickness = 2.2
 
-                    -- Контейнер для R, G, B полей (красный, зеленый, синий блоки)
                     local RGBRow = Instance.new("Frame")
                     RGBRow.Size = UDim2.new(1, -16, 0, 26)
                     RGBRow.Position = UDim2.new(0, 8, 0, 144)
@@ -738,7 +751,6 @@ function Library.Create:Window(options)
                     local GBox = CreateRGBBox(0.342, Color3.fromRGB(36, 110, 48), Color3.fromRGB(60, 185, 75), initG)
                     local BBox = CreateRGBBox(0.685, Color3.fromRGB(32, 68, 120), Color3.fromRGB(55, 115, 200), initB)
 
-                    -- Нижний HEX TextBox
                     local HexBox = Instance.new("TextBox")
                     HexBox.Size = UDim2.new(1, -16, 0, 26)
                     HexBox.Position = UDim2.new(0, 8, 0, 176)
@@ -767,7 +779,6 @@ function Library.Create:Window(options)
                         cpCallback(newCol)
                     end
 
-                    -- Взаимодействие с 2D палитрой
                     local picking = false
                     local function UpdateFromPalette(input)
                         local relX = math.clamp((input.Position.X - PaletteFrame.AbsolutePosition.X) / PaletteFrame.AbsoluteSize.X, 0, 1)
@@ -798,13 +809,12 @@ function Library.Create:Window(options)
                         end
                     end)
 
-                    -- Синхронизация при ручном вводе R / G / B
                     local function OnRGBLost()
                         local r = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
                         local g = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
                         local b = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
                         local col = Color3.fromRGB(r, g, b)
-                        local h, s, v = col:ToHSV()
+                        local h, _, v = col:ToHSV()
                         CursorRing.Position = UDim2.new(h, 0, 1 - v * 0.5, 0)
                         ApplyColor(col, true)
                     end
@@ -813,7 +823,6 @@ function Library.Create:Window(options)
                     GBox.FocusLost:Connect(OnRGBLost)
                     BBox.FocusLost:Connect(OnRGBLost)
 
-                    -- Синхронизация при вводе HEX
                     HexBox.FocusLost:Connect(function()
                         local parsed = HexToColor(HexBox.Text)
                         if parsed then
@@ -825,7 +834,6 @@ function Library.Create:Window(options)
                         end
                     end)
 
-                    -- Анимированное открытие/закрытие палитры
                     ColorBtn.MouseButton1Click:Connect(function()
                         PickerOpen = not PickerOpen
                         if PickerOpen then
@@ -965,7 +973,7 @@ function Library.Create:Window(options)
                 Library.Flags[sName] = default
             end
 
-            -- 3. DROPDOWN (С ПОДДЕРЖКОЙ ДИНАМИЧЕСКОГО ОБНОВЛЕНИЯ СПИСКА ДЛЯ КОНФИГОВ)
+            -- 3. DROPDOWN
             function Elements:Dropdown(cfg)
                 local dName = cfg.Name or "Dropdown"
                 local list = cfg.Options or {}
@@ -1168,7 +1176,6 @@ function Library.Create:Window(options)
     function WindowObj:AddConfTab()
         local ConfTab = WindowObj:Tab("Config")
 
-        -- Левая колонка (Side = 2): Темы и бинд меню
         local ThemeCol = ConfTab:AddColumn({
             Name = "UI & Theme",
             Description = "Customize colors & menu toggle key",
@@ -1230,7 +1237,6 @@ function Library.Create:Window(options)
             end
         })
 
-        -- Правая колонка (Side = 1): Конфиги в дропдауне
         local CfgCol = ConfTab:AddColumn({
             Name = "Config Manager",
             Description = "Save and load your JSON profiles",
