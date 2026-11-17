@@ -9,7 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local Library = {
     Flags = {},
-    FlagSetters = {}, -- Функции для визуального обновления элементов при загрузке конфига
+    FlagSetters = {},
     ThemeObjects = {
         Background = {},
         Text = {},
@@ -122,9 +122,6 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- ==========================================
--- НОТИФИКАЦИИ (NOTIFY)
--- ==========================================
 local ActiveNotifications = {}
 
 function Library:Notify(options)
@@ -206,9 +203,6 @@ function Library:Notify(options)
     end)
 end
 
--- ==========================================
--- ВАТЕРМАРК (WATERMARK)
--- ==========================================
 function Library:CreateWatermark(options)
     local IconId = options.Icon or "rbxassetid://7733960981"
     local Text = options.Text or "Arcade UI | FPS: 60"
@@ -256,12 +250,9 @@ function Library:CreateWatermark(options)
     }
 end
 
--- ==========================================
--- СОЗДАНИЕ ОКНА (LINORIA STYLE + COLUMNS)
--- ==========================================
 function Library.Create:Window(options)
     local Name = options.Name or "Lol"
-    local Subtitle = options.Subtitle or "ByAI"
+    local Subtitle = options.Subtitle or "ByLemonchity"
     local IconId = options.Icon or "rbxassetid://7733960981"
     local ToggleIconId = options.MobilebuttonIcon or options.MobileIcon or "rbxassetid://7733960981"
     Library.MenuKeybind = options.Keybind or Enum.KeyCode.RightControl
@@ -299,7 +290,6 @@ function Library.Create:Window(options)
     CenterGlow.ZIndex = 0
     CenterGlow.Parent = MainFrame
 
-    -- Топ-бар
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundColor3 = Library.Theme.Secondary
@@ -388,7 +378,6 @@ function Library.Create:Window(options)
     TabBarPad.PaddingLeft = UDim.new(0, 6)
     TabBarPad.PaddingRight = UDim.new(0, 6)
 
-    -- Контейнер страниц вкладок
     local PagesFolder = Instance.new("Frame")
     PagesFolder.Size = UDim2.new(1, -16, 1, -88)
     PagesFolder.Position = UDim2.new(0, 8, 0, 82)
@@ -439,7 +428,6 @@ function Library.Create:Window(options)
         Page.Visible = FirstTab
         Page.Parent = PagesFolder
 
-        -- Левая колонка (Side = 2)
         local LeftScroll = Instance.new("ScrollingFrame")
         LeftScroll.Size = UDim2.new(0.5, -5, 1, 0)
         LeftScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -457,7 +445,6 @@ function Library.Create:Window(options)
         LeftPad.PaddingLeft = UDim.new(0, 2)
         LeftPad.PaddingRight = UDim.new(0, 4)
 
-        -- Правая колонка (Side = 1)
         local RightScroll = Instance.new("ScrollingFrame")
         RightScroll.Size = UDim2.new(0.5, -5, 1, 0)
         RightScroll.Position = UDim2.new(0.5, 5, 0, 0)
@@ -495,7 +482,6 @@ function Library.Create:Window(options)
 
         local TabObj = {}
 
-        -- Функция создания GroupBox / Column (Side = 1 -> Право, Side = 2 -> Лево)
         function TabObj:AddColumn(colCfg)
             local cName = colCfg.Name or "Section"
             local cDesc = colCfg.Description or ""
@@ -577,7 +563,6 @@ function Library.Create:Window(options)
                 return orderCounter
             end
 
-            -- 1. TOGGLE + COLORPICKER + KEYBIND
             function Elements:Toggle(cfg)
                 local tName = cfg.Name or "Toggle"
                 local flag = cfg.Flag or tName
@@ -646,7 +631,6 @@ function Library.Create:Window(options)
                     Add = {}
                 }
 
-                -- COLORPICKER
                 function ToggleController.Add:Colorpicker(cpCfg)
                     local cpFlag = cpCfg.Flag or (flag .. "_Color")
                     local currentColor = cpCfg.Default or Color3.fromRGB(0, 41, 203)
@@ -927,7 +911,6 @@ function Library.Create:Window(options)
                 return ToggleController
             end
 
-            -- 2. SLIDER
             function Elements:Slider(cfg)
                 local sName = cfg.Name or "Slider"
                 local flag = cfg.Flag or sName
@@ -1020,7 +1003,6 @@ function Library.Create:Window(options)
                 end
             end
 
-            -- 3. DROPDOWN
             function Elements:Dropdown(cfg)
                 local dName = cfg.Name or "Dropdown"
                 local flag = cfg.Flag or dName
@@ -1125,7 +1107,6 @@ function Library.Create:Window(options)
                 }
             end
 
-            -- 4. BUTTON
             function Elements:Button(cfg)
                 local bName = cfg.Name or "Button"
                 local boundKey = cfg.Keybind
@@ -1177,7 +1158,6 @@ function Library.Create:Window(options)
                 end)
             end
 
-            -- 5. TEXTBOX
             function Elements:TextBox(cfg)
                 local tbName = cfg.Name or "Input"
                 local flag = cfg.Flag or tbName
@@ -1241,9 +1221,6 @@ function Library.Create:Window(options)
         return TabObj
     end
 
-    -- ==========================================
-    -- ВКЛАДКА КОНФИГОВ (С СОХРАНЕНИЕМ ПО ФЛАГАМ)
-    -- ==========================================
     function WindowObj:AddConfTab()
         local ConfTab = WindowObj:Tab("Config")
 
