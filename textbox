@@ -1,3 +1,0 @@
-LeftCol:AddTextBox("Target", "Введите ник...", true, function(text)
-    Library:Notify("Target", "Target: " .. text, 3)
-end)
