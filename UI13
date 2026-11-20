@@ -2,10 +2,10 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
+local TextService = game:GetService("TextService")
 local Players = game:GetService("Players")
 
 local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
 
 local Library = {
     Flags = {},
@@ -26,6 +26,73 @@ local Library = {
     Font = Enum.Font.Arcade,
     Open = true
 }
+
+-- ==========================================
+-- ПОДДЕРЖКА LUCIDE ICONS + RBXASSETID
+-- ==========================================
+local LucideCache = {}
+local LucideMap = nil
+
+local function LoadLucideMap()
+    if LucideMap then return LucideMap end
+    local ok, res = pcall(function()
+        local raw = game:HttpGet("https://raw.githubusercontent.com/Footagesus/Icons/main/lucide/dist/Icons.lua")
+        return loadstring(raw)()
+    end)
+    if ok and type(res) == "table" then
+        LucideMap = res
+    else
+        LucideMap = {}
+    end
+    return LucideMap
+end
+
+local function ResolveIcon(iconInput)
+    if not iconInput or iconInput == "" then
+        return ""
+    end
+    local str = tostring(iconInput)
+    -- Если уже передан rbxassetid или http ссылка
+    if string.find(str, "rbxassetid://") or string.find(str, "http") then
+        return str
+    end
+    -- Если передано только число
+    if tonumber(str) then
+        return "rbxassetid://" .. str
+    end
+
+    local cleanName = string.lower(str):gsub("^lucide:", "")
+    if LucideCache[cleanName] then
+        return LucideCache[cleanName]
+    end
+
+    -- 1. Попытка взять готовый rbxassetid из базы Lucide для Roblox
+    local map = LoadLucideMap()
+    if map[cleanName] then
+        LucideCache[cleanName] = map[cleanName]
+        return map[cleanName]
+    end
+
+    -- 2. Фоллбэк: загрузка PNG иконки Lucide через getcustomasset
+    if getcustomasset and writefile and isfile and makefolder then
+        pcall(function()
+            if not isfolder("NeverloseIcons") then
+                makefolder("NeverloseIcons")
+            end
+            local path = "NeverloseIcons/" .. cleanName .. ".png"
+            if not isfile(path) then
+                local imgData = game:HttpGet("https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/" .. cleanName .. ".png")
+                writefile(path, imgData)
+            end
+            LucideCache[cleanName] = getcustomasset(path)
+        end)
+        if LucideCache[cleanName] then
+            return LucideCache[cleanName]
+        end
+    end
+
+    return "rbxassetid://7733960981"
+end
 
 -- Вспомогательные функции
 local function Create(class, props)
@@ -82,7 +149,7 @@ local function ApplySnakeStroke(parent, thickness)
     return stroke, gradient
 end
 
--- Dragging с поддержкой Anti-Hide (нельзя утащить за экран)
+-- Dragging с поддержкой Anti-Hide
 local function MakeDraggable(frame, dragHandle, antiHide)
     local dragging, dragInput, dragStart, startPos
     dragHandle = dragHandle or frame
@@ -191,7 +258,7 @@ local NotifContainer = Create("Frame", {
     Name = "Notifications",
     Parent = ScreenGui,
     AnchorPoint = Vector2.new(0.5, 0),
-    Position = UDim2.new(0.5, 0, 0.56, 0), -- Чуть ниже середины экрана
+    Position = UDim2.new(0.5, 0, 0.56, 0),
     Size = UDim2.new(0, 320, 0, 300),
     BackgroundTransparency = 1
 })
@@ -256,16 +323,12 @@ function Library:Notify(cfg)
         BorderSizePixel = 0
     })
 
-    -- Вставляем в начало, чтобы старые улетали вниз
     table.insert(ActiveNotifs, 1, NotifFrame)
     UpdateNotifPositions()
 
     Tween(NotifFrame, {0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {BackgroundTransparency = 0.05})
-
-    -- Полоска времени
     Tween(TimerBar, {duration, Enum.EasingStyle.Linear}, {Size = UDim2.new(0, 0, 0, 3)})
 
-    -- Эффект печатанья (Typewriter)
     task.spawn(function()
         for i = 1, #text do
             if not TextLbl or not TextLbl.Parent then break end
@@ -274,7 +337,6 @@ function Library:Notify(cfg)
         end
     end)
 
-    -- Удаление по истечении времени
     task.delay(duration, function()
         local idx = table.find(ActiveNotifs, NotifFrame)
         if idx then table.remove(ActiveNotifs, idx) end
@@ -290,57 +352,64 @@ function Library:Notify(cfg)
 end
 
 -- ==========================================
--- ВАТЕРМАРК (С картинкой слева, змейкой и Anti-Hide)
+-- ВАТЕРМАРК (ПОФИКШЕН РАЗМЕР + LUCIDE + ANTI-HIDE)
 -- ==========================================
 function Library:Watermark(cfg)
-    local imgId = cfg.Image or "rbxassetid://7733960981"
+    local imgId = ResolveIcon(cfg.Image or cfg.Icon or "home")
     local text = cfg.Text or "Lol | ByAI | 60 FPS"
 
     local WmFrame = Create("Frame", {
         Name = "Watermark",
         Parent = ScreenGui,
         Position = UDim2.new(0, 20, 0, 45),
-        Size = UDim2.new(0, 230, 0, 34),
+        Size = UDim2.new(0, 0, 0, 34),
+        AutomaticSize = Enum.AutomaticSize.X,
         BackgroundColor3 = Library.Theme.Background
     })
     RegisterTheme(WmFrame, "BackgroundColor3", "Background")
     Create("UICorner", {Parent = WmFrame, CornerRadius = UDim.new(0, 6)})
     ApplySnakeStroke(WmFrame, 1.5)
-    MakeDraggable(WmFrame, WmFrame, true) -- Anti-Hide включен
+    MakeDraggable(WmFrame, WmFrame, true)
+
+    Create("UIListLayout", {
+        Parent = WmFrame,
+        FillDirection = Enum.FillDirection.Horizontal,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        Padding = UDim.new(0, 8)
+    })
+    Create("UIPadding", {
+        Parent = WmFrame,
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 12)
+    })
 
     local Icon = Create("ImageLabel", {
         Parent = WmFrame,
-        Position = UDim2.new(0, 8, 0.5, -10),
-        Size = UDim2.new(0, 20, 0, 20),
+        Size = UDim2.new(0, 18, 0, 18),
         BackgroundTransparency = 1,
         Image = imgId,
-        ImageColor3 = Library.Theme.Accent
+        ImageColor3 = Library.Theme.Accent,
+        LayoutOrder = 1
     })
     RegisterTheme(Icon, "ImageColor3", "Accent")
 
     local Label = Create("TextLabel", {
         Parent = WmFrame,
-        Position = UDim2.new(0, 34, 0, 0),
-        Size = UDim2.new(1, -42, 1, 0),
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
         BackgroundTransparency = 1,
         Font = Library.Font,
         Text = text,
         TextColor3 = Library.Theme.Text,
         TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextXAlignment = Enum.TextXAlignment.Left,
+        LayoutOrder = 2
     })
     RegisterTheme(Label, "TextColor3", "Text")
 
-    local function ResizeWm()
-        local bounds = Label.TextBounds.X
-        WmFrame.Size = UDim2.new(0, bounds + 46, 0, 34)
-    end
-    ResizeWm()
-    Label:GetPropertyChangedSignal("Text"):Connect(ResizeWm)
-
     return {
         SetText = function(_, newText) Label.Text = newText end,
-        SetImage = function(_, newImg) Icon.Image = newImg end
+        SetImage = function(_, newImg) Icon.Image = ResolveIcon(newImg) end
     }
 end
 
@@ -353,7 +422,7 @@ function WindowConstructor:Window(cfg)
     local Name = cfg.Name or "Neverlose"
     local Subtitle = cfg.Subtitle or "v1.0"
     local ToggleKey = cfg.Keybind or Enum.KeyCode.RightControl
-    local TopImage = cfg.Image or "rbxassetid://7733960981"
+    local TopImage = ResolveIcon(cfg.Image or cfg.Icon or "shield")
 
     -- Мобильная кнопка открытия/закрытия UI
     local MobileBtn = Create("ImageButton", {
@@ -383,7 +452,7 @@ function WindowConstructor:Window(cfg)
     Create("UICorner", {Parent = MainFrame, CornerRadius = UDim.new(0, 8)})
     ApplySnakeStroke(MainFrame, 2)
 
-    -- Подсветка посередине UI (Эффект света)
+    -- Подсветка посередине UI
     local CenterGlow = Create("ImageLabel", {
         Name = "CenterGlow",
         Parent = MainFrame,
@@ -391,7 +460,7 @@ function WindowConstructor:Window(cfg)
         Position = UDim2.new(0.55, 0, 0.5, 0),
         Size = UDim2.new(0.85, 0, 0.85, 0),
         BackgroundTransparency = 1,
-        Image = "rbxassetid://5028857084", -- Радиальное свечение
+        Image = "rbxassetid://5028857084",
         ImageColor3 = Library.Theme.Accent,
         ImageTransparency = 0.88,
         ZIndex = 1
@@ -412,8 +481,8 @@ function WindowConstructor:Window(cfg)
 
     local TopLogo = Create("ImageLabel", {
         Parent = Topbar,
-        Position = UDim2.new(0, 12, 0.5, -12),
-        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(0, 12, 0.5, -11),
+        Size = UDim2.new(0, 22, 0, 22),
         BackgroundTransparency = 1,
         Image = TopImage,
         ImageColor3 = Library.Theme.Accent,
@@ -423,8 +492,8 @@ function WindowConstructor:Window(cfg)
 
     local TitleLabel = Create("TextLabel", {
         Parent = Topbar,
-        Position = UDim2.new(0, 44, 0, 0),
-        Size = UDim2.new(0, 200, 1, 0),
+        Position = UDim2.new(0, 42, 0, 0),
+        Size = UDim2.new(0, 250, 1, 0),
         BackgroundTransparency = 1,
         Font = Library.Font,
         Text = Name .. " <font color='#00AAFF'>[" .. Subtitle .. "]</font>",
@@ -436,7 +505,7 @@ function WindowConstructor:Window(cfg)
     })
     RegisterTheme(TitleLabel, "TextColor3", "Text")
 
-    -- Боковая панель (Секции и Табы как в Neverlose)
+    -- Боковая панель
     local Sidebar = Create("ScrollingFrame", {
         Name = "Sidebar",
         Parent = MainFrame,
@@ -470,7 +539,6 @@ function WindowConstructor:Window(cfg)
         ZIndex = 2
     })
 
-    -- Открытие / Закрытие UI с анимацией
     local function ToggleUI()
         Library.Open = not Library.Open
         if Library.Open then
@@ -498,7 +566,7 @@ function WindowConstructor:Window(cfg)
     local WindowObj = { Tabs = {}, CurrentTab = nil }
 
     -- ==========================================
-    -- AddSection (Линия с названием как в Neverlose)
+    -- AddSection
     -- ==========================================
     function WindowObj:AddSection(cfg)
         local secName = type(cfg) == "table" and cfg.Name or tostring(cfg)
@@ -539,21 +607,18 @@ function WindowConstructor:Window(cfg)
     end
 
     -- ==========================================
-    -- AddTab (Вкладка с Left и Right Groupbox)
+    -- AddTab (С поддержкой Lucide Icons!)
     -- ==========================================
     function WindowObj:AddTab(cfg)
         local tabName = type(cfg) == "table" and cfg.Name or tostring(cfg)
+        local tabIcon = type(cfg) == "table" and (cfg.Icon or cfg.Image) or nil
 
         local TabBtn = Create("TextButton", {
             Parent = Sidebar,
             Size = UDim2.new(1, 0, 0, 30),
             BackgroundColor3 = Library.Theme.Groupbox,
             BackgroundTransparency = 1,
-            Font = Library.Font,
-            Text = "  " .. tabName,
-            TextColor3 = Library.Theme.SubText,
-            TextSize = 15,
-            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = "",
             AutoButtonColor = false
         })
         Create("UICorner", {Parent = TabBtn, CornerRadius = UDim.new(0, 6)})
@@ -567,6 +632,32 @@ function WindowConstructor:Window(cfg)
         })
         RegisterTheme(Indicator, "BackgroundColor3", "Accent")
         Create("UICorner", {Parent = Indicator, CornerRadius = UDim.new(1, 0)})
+
+        local textOffset = 10
+        local TabIconImg = nil
+        if tabIcon then
+            textOffset = 32
+            TabIconImg = Create("ImageLabel", {
+                Parent = TabBtn,
+                Position = UDim2.new(0, 9, 0.5, -8),
+                Size = UDim2.new(0, 16, 0, 16),
+                BackgroundTransparency = 1,
+                Image = ResolveIcon(tabIcon),
+                ImageColor3 = Library.Theme.SubText
+            })
+        end
+
+        local TabText = Create("TextLabel", {
+            Parent = TabBtn,
+            Position = UDim2.new(0, textOffset, 0, 0),
+            Size = UDim2.new(1, -textOffset - 4, 1, 0),
+            BackgroundTransparency = 1,
+            Font = Library.Font,
+            Text = tabName,
+            TextColor3 = Library.Theme.SubText,
+            TextSize = 15,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
 
         local Page = Create("Frame", {
             Parent = PageContainer,
@@ -601,16 +692,24 @@ function WindowConstructor:Window(cfg)
         local function SelectTab()
             for _, t in pairs(WindowObj.Tabs) do
                 t.Page.Visible = false
-                Tween(t.Btn, {0.2}, {BackgroundTransparency = 1, TextColor3 = Library.Theme.SubText})
+                Tween(t.Btn, {0.2}, {BackgroundTransparency = 1})
+                Tween(t.Txt, {0.2}, {TextColor3 = Library.Theme.SubText})
                 Tween(t.Ind, {0.2}, {BackgroundTransparency = 1})
+                if t.Icon then
+                    Tween(t.Icon, {0.2}, {ImageColor3 = Library.Theme.SubText})
+                end
             end
             Page.Visible = true
-            Tween(TabBtn, {0.2}, {BackgroundTransparency = 0.2, TextColor3 = Library.Theme.Text})
+            Tween(TabBtn, {0.2}, {BackgroundTransparency = 0.2})
+            Tween(TabText, {0.2}, {TextColor3 = Library.Theme.Text})
             Tween(Indicator, {0.2}, {BackgroundTransparency = 0})
+            if TabIconImg then
+                Tween(TabIconImg, {0.2}, {ImageColor3 = Library.Theme.Accent})
+            end
         end
 
         TabBtn.MouseButton1Click:Connect(SelectTab)
-        table.insert(WindowObj.Tabs, {Page = Page, Btn = TabBtn, Ind = Indicator})
+        table.insert(WindowObj.Tabs, {Page = Page, Btn = TabBtn, Txt = TabText, Ind = Indicator, Icon = TabIconImg})
 
         if #WindowObj.Tabs == 1 then
             SelectTab()
@@ -619,7 +718,7 @@ function WindowConstructor:Window(cfg)
         local TabObj = {}
 
         -- ==========================================
-        -- Groupbox (Левая / Правая колонка)
+        -- Groupbox
         -- ==========================================
         function TabObj:AddGroupbox(cfg)
             local gbName = cfg.Name or "Groupbox"
@@ -665,7 +764,6 @@ function WindowConstructor:Window(cfg)
 
             local Elements = {}
 
-            -- Компонент: Label
             function Elements:Label(text)
                 local Lbl = Create("TextLabel", {
                     Parent = Content,
@@ -681,7 +779,6 @@ function WindowConstructor:Window(cfg)
                 return { SetText = function(_, t) Lbl.Text = t end }
             end
 
-            -- Компонент: Button
             function Elements:Button(cfg)
                 local Btn = Create("TextButton", {
                     Parent = Content,
@@ -705,7 +802,6 @@ function WindowConstructor:Window(cfg)
                 end)
             end
 
-            -- Компонент: TextBox
             function Elements:Textbox(cfg)
                 local flag = cfg.Flag or cfg.Name
                 local BoxFrame = Create("Frame", {
@@ -746,7 +842,6 @@ function WindowConstructor:Window(cfg)
                 Library.ConfigElements[flag] = {Type = "Textbox", Set = SetVal}
             end
 
-            -- Компонент: Toggle (С привязкой Colorpicker и Keybind)
             function Elements:Toggle(cfg)
                 local flag = cfg.Flag or cfg.Name
                 local state = cfg.Default or false
@@ -824,9 +919,6 @@ function WindowConstructor:Window(cfg)
 
                 local ToggleObj = { Set = SetState }
 
-                -- ==========================================
-                -- 2D COLORPICKER С HEX ВВОДОМ
-                -- ==========================================
                 function ToggleObj:AddColorpicker(cpCfg)
                     local cpFlag = cpCfg.Flag or (flag .. "_Color")
                     local currentColor = cpCfg.Default or Color3.fromRGB(0, 170, 255)
@@ -973,9 +1065,6 @@ function WindowConstructor:Window(cfg)
                     return ToggleObj
                 end
 
-                -- ==========================================
-                -- KEYBIND + ШЕСТЕРЕНКА (Hold, Toggle, Always On)
-                -- ==========================================
                 function ToggleObj:AddKeybind(kbCfg)
                     local kbFlag = kbCfg.Flag or (flag .. "_Keybind")
                     local currentKey = kbCfg.Default or Enum.KeyCode.None
@@ -1113,7 +1202,6 @@ function WindowConstructor:Window(cfg)
                 return ToggleObj
             end
 
-            -- Компонент: Slider (Add:Slider синтаксис)
             function Elements:Slider(cfg)
                 local flag = cfg.Flag or cfg.Name
                 local min = cfg.Min or 0
@@ -1202,7 +1290,6 @@ function WindowConstructor:Window(cfg)
                 Library.ConfigElements[flag] = {Type = "Slider", Set = SetSlider}
             end
 
-            -- Компонент: Dropdown
             function Elements:Dropdown(cfg)
                 local flag = cfg.Flag or cfg.Name
                 local options = cfg.Options or {}
@@ -1306,7 +1393,7 @@ function WindowConstructor:Window(cfg)
     end
 
     -- ==========================================
-    -- СИСТЕМА КОНФИГОВ + НАСТРОЙКА ТЕМЫ (Add:ConfigManager / Addconftab)
+    -- СИСТЕМА КОНФИГОВ + НАСТРОЙКА ТЕМЫ
     -- ==========================================
     function WindowObj:AddConfigManager(folderName)
         folderName = folderName or "NeverloseConfigs"
@@ -1315,7 +1402,7 @@ function WindowConstructor:Window(cfg)
         end
 
         self:AddSection({Name = "Configuration"})
-        local ConfTab = self:AddTab({Name = "Configs & Theme"})
+        local ConfTab = self:AddTab({Name = "Configs & Theme", Icon = "settings"})
 
         local LeftBox = ConfTab:AddGroupbox({Name = "Config Manager (JSON)", Side = "Left"})
         local RightBox = ConfTab:AddGroupbox({Name = "UI Theme Settings", Side = "Right"})
