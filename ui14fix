@@ -1,0 +1,137 @@
+    local function CreatePlayerESP(plr)
+        if plr == LocalPlayer then return end
+        CleanupPlayer(plr)
+
+        local holder = Instance.new("Frame")
+        holder.BackgroundTransparency = 1
+        holder.Visible = false
+        holder.Parent = EspWorldOverlay
+
+        -- Внешний черный контур на отдельном Frame (чтобы не конфликтовал с цветным)
+        local outerFrame = Instance.new("Frame")
+        outerFrame.Name = "OuterOutline"
+        outerFrame.Size = UDim2.fromScale(1, 1)
+        outerFrame.BackgroundTransparency = 1
+        outerFrame.BorderSizePixel = 0
+        outerFrame.ZIndex = 1
+        outerFrame.Parent = holder
+
+        local strokeOuter = Instance.new("UIStroke")
+        strokeOuter.Color = Color3.new(0, 0, 0)
+        strokeOuter.Thickness = 2
+        strokeOuter.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        strokeOuter.Parent = outerFrame
+
+        -- Внутренний бокс с заливкой и цветным контуром
+        local boxFrame = Instance.new("Frame")
+        boxFrame.Name = "InnerBox"
+        boxFrame.Size = UDim2.fromScale(1, 1)
+        boxFrame.BorderSizePixel = 0
+        boxFrame.ZIndex = 2
+        boxFrame.Parent = holder
+
+        local fillGrad = Instance.new("UIGradient")
+        fillGrad.Rotation = 90
+        fillGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0.0, 0.92),
+            NumberSequenceKeypoint.new(0.5, 0.35),
+            NumberSequenceKeypoint.new(1.0, 0.92)
+        })
+        fillGrad.Parent = boxFrame
+
+        local strokeInner = Instance.new("UIStroke")
+        strokeInner.Thickness = 1
+        strokeInner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        strokeInner.Parent = boxFrame
+
+        local corners = {}
+        for i = 1, 8 do
+            local c = Instance.new("Frame")
+            c.BorderSizePixel = 0
+            c.Visible = false
+            c.ZIndex = 3
+            c.Parent = holder
+            corners[i] = c
+        end
+
+        local nameLbl = Instance.new("TextLabel")
+        nameLbl.BackgroundTransparency = 1
+        nameLbl.Position = UDim2.new(0.5, -100, 0, -18)
+        nameLbl.Size = UDim2.fromOffset(200, 16)
+        nameLbl.Font = Enum.Font.Arcade
+        nameLbl.TextSize = 15
+        nameLbl.TextColor3 = Color3.new(1, 1, 1)
+        nameLbl.TextStrokeTransparency = 0.2
+        nameLbl.Text = plr.Name
+        nameLbl.ZIndex = 4
+        nameLbl.Parent = holder
+
+        local itemLbl = Instance.new("TextLabel")
+        itemLbl.BackgroundTransparency = 1
+        itemLbl.Position = UDim2.new(0.5, -100, 1, 2)
+        itemLbl.Size = UDim2.fromOffset(200, 15)
+        itemLbl.Font = Enum.Font.Arcade
+        itemLbl.TextSize = 14
+        itemLbl.TextColor3 = Library.Theme.Accent
+        itemLbl.TextStrokeTransparency = 0.2
+        itemLbl.ZIndex = 4
+        itemLbl.Parent = holder
+
+        local hpBg = Instance.new("Frame")
+        hpBg.Position = UDim2.fromOffset(-6, 0)
+        hpBg.Size = UDim2.new(0, 3, 1, 0)
+        hpBg.BackgroundColor3 = Color3.new(0, 0, 0)
+        hpBg.BorderSizePixel = 0
+        hpBg.ZIndex = 3
+        hpBg.Parent = holder
+
+        local hpFill = Instance.new("Frame")
+        hpFill.AnchorPoint = Vector2.new(0, 1)
+        hpFill.Position = UDim2.fromScale(0, 1)
+        hpFill.Size = UDim2.fromScale(1, 1)
+        hpFill.BorderSizePixel = 0
+        hpFill.ZIndex = 4
+        hpFill.Parent = hpBg
+
+        local hpTxt = Instance.new("TextLabel")
+        hpTxt.BackgroundTransparency = 1
+        hpTxt.Position = UDim2.fromOffset(-34, 0)
+        hpTxt.Size = UDim2.fromOffset(26, 14)
+        hpTxt.Font = Enum.Font.Arcade
+        hpTxt.TextSize = 13
+        hpTxt.TextStrokeTransparency = 0.2
+        hpTxt.ZIndex = 4
+        hpTxt.Parent = holder
+
+        local tracer = Drawing and Drawing.new("Line") or nil
+        if tracer then
+            tracer.Thickness = 1.4
+            tracer.Visible = false
+        end
+
+        local bones = {}
+        if Drawing then
+            for i = 1, 14 do
+                local l = Drawing.new("Line")
+                l.Thickness = 1.4
+                l.Visible = false
+                bones[i] = l
+            end
+        end
+
+        PlayerObjects[plr] = {
+            Holder = holder,
+            OuterFrame = outerFrame,
+            BoxFrame = boxFrame,
+            StrokeOuter = strokeOuter,
+            StrokeInner = strokeInner,
+            Corners = corners,
+            NameLbl = nameLbl,
+            ItemLbl = itemLbl,
+            HpBg = hpBg,
+            HpFill = hpFill,
+            HpTxt = hpTxt,
+            Tracer = tracer,
+            Bones = bones
+        }
+    end
