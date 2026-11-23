@@ -1,7 +1,3 @@
--- ============================================================================
--- LeMOON / Klax-Style UI Library (Loadstring Module)
--- ============================================================================
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -18,16 +14,6 @@ local function GetSafeParent()
     end
     return CoreGui
 end
-
--- Удаляем старый экземпляр GUI при повторном запуске
-local OldGui = GetSafeParent():FindFirstChild("LeMOON_Klax_UI_v2")
-if OldGui then OldGui:Destroy() end
-local OldEsp = GetSafeParent():FindFirstChild("LeMOON_WorldESP")
-if OldEsp then OldEsp:Destroy() end
-
--- ============================================================================
--- ГЛОБАЛЬНЫЕ ТАБЛИЦЫ И СИНТАКСИС
--- ============================================================================
 
 local Library = {
     Flags = {},
@@ -47,7 +33,7 @@ local Library = {
         Text = {}
     },
     MenuKeybind = Enum.KeyCode.RightControl,
-    ConfigFolder = "LeMOON_Configs",
+    ConfigFolder = "LemonchityDLC_Configs",
     ActiveWindow = nil,
     Notifications = {}
 }
@@ -57,7 +43,6 @@ local Add = {}
 local add = {}
 local Esp = {}
 
--- Привязываем все пространства имен к Library, чтобы они были доступны после loadstring
 Library.Create = Create
 Library.Add = Add
 Library.add = add
@@ -140,10 +125,6 @@ local function MakeDraggable(dragHandle, targetFrame)
         end
     end)
 end
-
--- ============================================================================
--- ROOT GUI & СИСТЕМА НОТИФИКАЦИЙ
--- ============================================================================
 
 local RootGui = Instance.new("ScreenGui")
 RootGui.Name = "LeMOON_Klax_UI_v2"
@@ -267,10 +248,6 @@ function Library:Notify(options)
     end)
 end
 
--- ============================================================================
--- WATERMARK
--- ============================================================================
-
 function Library:CreateWatermark(options)
     options = options or {}
     local wmFrame = Instance.new("Frame")
@@ -332,10 +309,6 @@ function Library:CreateWatermark(options)
 
     return wmObj
 end
-
--- ============================================================================
--- JSON CONFIG SYSTEM
--- ============================================================================
 
 local function EnsureConfigFolder()
     if isfolder and makefolder and not isfolder(Library.ConfigFolder) then
@@ -424,10 +397,6 @@ function Library:GetConfigList()
     end
     return list
 end
-
--- ============================================================================
--- 2D COLORPICKER + HEX
--- ============================================================================
 
 local ActivePickerPopup = nil
 
@@ -616,10 +585,6 @@ local function OpenColorPickerPopup(anchorButton, defaultColor, onColorChanged)
         ActivePickerPopup = nil
     end)
 end
-
--- ============================================================================
--- ОКНО: Create:Window -> TABS -> PAGES
--- ============================================================================
 
 function Create:Window(options)
     options = options or {}
@@ -1054,10 +1019,6 @@ function Create:Window(options)
 
     return WindowObj
 end
-
--- ============================================================================
--- КОМПОНЕНТЫ UI
--- ============================================================================
 
 function Create:Toggle(section, options)
     options = options or {}
@@ -1548,10 +1509,6 @@ function Add:Label(section, text)
     return lbl
 end
 
--- ============================================================================
--- ВКЛАДКА КОНФИГОВ И ТЕМЫ: Library.Addconftab(Window)
--- ============================================================================
-
 function Library.Addconftab(window)
     window = window or Library.ActiveWindow
     local SettingsTab = window:Tab({ Name = "Settings" })
@@ -1649,10 +1606,6 @@ function Library.Addconftab(window)
 
     return SettingsTab
 end
-
--- ============================================================================
--- ПОЛНОЦЕННЫЙ МОДУЛЬ ESP + 3D ESP PREVIEW: Esp:TabESP(Window) / Window:Esp()
--- ============================================================================
 
 local R15_Bones = {
     {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
