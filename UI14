@@ -1,3 +1,7 @@
+-- ============================================================================
+-- LeMOON / Klax-Style UI Library (Loadstring Module + Keybind Modes + Fixed Box ESP)
+-- ============================================================================
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -14,6 +18,15 @@ local function GetSafeParent()
     end
     return CoreGui
 end
+
+local OldGui = GetSafeParent():FindFirstChild("LeMOON_Klax_UI_v2")
+if OldGui then OldGui:Destroy() end
+local OldEsp = GetSafeParent():FindFirstChild("LeMOON_WorldESP")
+if OldEsp then OldEsp:Destroy() end
+
+-- ============================================================================
+-- ГЛОБАЛЬНЫЕ ТАБЛИЦЫ И СИНТАКСИС
+-- ============================================================================
 
 local Library = {
     Flags = {},
@@ -33,7 +46,7 @@ local Library = {
         Text = {}
     },
     MenuKeybind = Enum.KeyCode.RightControl,
-    ConfigFolder = "LemonchityDLC_Configs",
+    ConfigFolder = "LeMOON_Configs",
     ActiveWindow = nil,
     Notifications = {}
 }
@@ -125,6 +138,10 @@ local function MakeDraggable(dragHandle, targetFrame)
         end
     end)
 end
+
+-- ============================================================================
+-- ROOT GUI & СИСТЕМА НОТИФИКАЦИЙ
+-- ============================================================================
 
 local RootGui = Instance.new("ScreenGui")
 RootGui.Name = "LeMOON_Klax_UI_v2"
@@ -248,6 +265,9 @@ function Library:Notify(options)
     end)
 end
 
+-- ============================================================================
+-- WATERMARK
+-- ============================================================================
 
 function Library:CreateWatermark(options)
     options = options or {}
@@ -310,6 +330,10 @@ function Library:CreateWatermark(options)
 
     return wmObj
 end
+
+-- ============================================================================
+-- JSON CONFIG SYSTEM
+-- ============================================================================
 
 local function EnsureConfigFolder()
     if isfolder and makefolder and not isfolder(Library.ConfigFolder) then
@@ -399,6 +423,10 @@ function Library:GetConfigList()
     return list
 end
 
+-- ============================================================================
+-- POPUP ДЛЯ KEYBIND MODE (Toggle / Hold / Always On)
+-- ============================================================================
+
 local ActiveKeybindModePopup = nil
 
 local function OpenKeybindModePopup(anchorButton, currentMode, onModeSelected)
@@ -453,6 +481,10 @@ local function OpenKeybindModePopup(anchorButton, currentMode, onModeSelected)
         end)
     end
 end
+
+-- ============================================================================
+-- 2D COLORPICKER + HEX
+-- ============================================================================
 
 local ActivePickerPopup = nil
 
@@ -641,6 +673,10 @@ local function OpenColorPickerPopup(anchorButton, defaultColor, onColorChanged)
         ActivePickerPopup = nil
     end)
 end
+
+-- ============================================================================
+-- ОКНО: Create:Window -> TABS -> PAGES
+-- ============================================================================
 
 function Create:Window(options)
     options = options or {}
@@ -1076,6 +1112,10 @@ function Create:Window(options)
     return WindowObj
 end
 
+-- ============================================================================
+-- КОМПОНЕНТЫ UI (С ШЕСТЕРЁНКОЙ ДЛЯ KEYBIND: Toggle / Hold / Always On)
+-- ============================================================================
+
 function Create:Toggle(section, options)
     options = options or {}
     local name = options.Name or "Toggle"
@@ -1192,7 +1232,7 @@ function Create:Toggle(section, options)
     function ToggleObj:AddKeybind(kbOpts)
         kbOpts = kbOpts or {}
         local kbDefault = kbOpts.Default or Enum.KeyCode.None
-        local kbMode = kbOpts.Mode or "Toggle" -- "Toggle", "Hold", "Always On"
+        local kbMode = kbOpts.Mode or "Toggle"
         local kbFlag = kbOpts.Flag or (flag .. "_bind")
         local kbModeFlag = kbFlag .. "_mode"
         local kbCallback = kbOpts.Callback or function() end
@@ -1622,6 +1662,10 @@ function Add:Label(section, text)
     return lbl
 end
 
+-- ============================================================================
+-- ВКЛАДКА КОНФИГОВ И ТЕМЫ: Library.Addconftab(Window)
+-- ============================================================================
+
 function Library.Addconftab(window)
     window = window or Library.ActiveWindow
     local SettingsTab = window:Tab({ Name = "Settings" })
@@ -1719,6 +1763,10 @@ function Library.Addconftab(window)
 
     return SettingsTab
 end
+
+-- ============================================================================
+-- ПОЛНОЦЕННЫЙ МОДУЛЬ ESP + 3D ESP PREVIEW: Esp:TabESP(Window) / Window:Esp()
+-- ============================================================================
 
 local R15_Bones = {
     {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
@@ -1839,6 +1887,21 @@ function Esp:TabESP(window, tabTitle)
         end
     end)
 
+    -- Разделённые контейнеры для 3D Preview (чтобы чёрный контур не перекрывал цветной)
+    local P_Outer = Instance.new("Frame")
+    P_Outer.Size = UDim2.fromOffset(115, 200)
+    P_Outer.Position = UDim2.new(0.5, -57, 0.5, -95)
+    P_Outer.BackgroundTransparency = 1
+    P_Outer.BorderSizePixel = 0
+    P_Outer.ZIndex = 9
+    P_Outer.Parent = Viewport
+
+    local P_StrokeOuter = Instance.new("UIStroke")
+    P_StrokeOuter.Color = Color3.new(0, 0, 0)
+    P_StrokeOuter.Thickness = 2
+    P_StrokeOuter.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    P_StrokeOuter.Parent = P_Outer
+
     local P_Box = Instance.new("Frame")
     P_Box.Size = UDim2.fromOffset(115, 200)
     P_Box.Position = UDim2.new(0.5, -57, 0.5, -95)
@@ -1857,14 +1920,10 @@ function Esp:TabESP(window, tabTitle)
     })
     P_FillGrad.Parent = P_Box
 
-    local P_StrokeOuter = Instance.new("UIStroke")
-    P_StrokeOuter.Color = Color3.new(0, 0, 0)
-    P_StrokeOuter.Thickness = 2
-    P_StrokeOuter.Parent = P_Box
-
     local P_StrokeInner = Instance.new("UIStroke")
     P_StrokeInner.Color = Library.Theme.Accent
     P_StrokeInner.Thickness = 1
+    P_StrokeInner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     P_StrokeInner.Parent = P_Box
 
     local P_Corners = {}
@@ -1927,7 +1986,7 @@ function Esp:TabESP(window, tabTitle)
     P_Item.Parent = P_Box
 
     local EspWorldOverlay = Instance.new("ScreenGui")
-    EspWorldOverlay.Name = "Lemonchity_ESP"
+    EspWorldOverlay.Name = "LeMOON_WorldESP"
     EspWorldOverlay.ResetOnSpawn = false
     EspWorldOverlay.IgnoreGuiInset = true
     EspWorldOverlay.Parent = GetSafeParent()
@@ -1956,9 +2015,27 @@ function Esp:TabESP(window, tabTitle)
         holder.Visible = false
         holder.Parent = EspWorldOverlay
 
+        -- Внешний чёрный контур на отдельном Frame (чтобы не конфликтовал с цветным)
+        local outerFrame = Instance.new("Frame")
+        outerFrame.Name = "OuterOutline"
+        outerFrame.Size = UDim2.fromScale(1, 1)
+        outerFrame.BackgroundTransparency = 1
+        outerFrame.BorderSizePixel = 0
+        outerFrame.ZIndex = 1
+        outerFrame.Parent = holder
+
+        local strokeOuter = Instance.new("UIStroke")
+        strokeOuter.Color = Color3.new(0, 0, 0)
+        strokeOuter.Thickness = 2
+        strokeOuter.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        strokeOuter.Parent = outerFrame
+
+        -- Внутренний бокс с заливкой и цветным контуром
         local boxFrame = Instance.new("Frame")
+        boxFrame.Name = "InnerBox"
         boxFrame.Size = UDim2.fromScale(1, 1)
         boxFrame.BorderSizePixel = 0
+        boxFrame.ZIndex = 2
         boxFrame.Parent = holder
 
         local fillGrad = Instance.new("UIGradient")
@@ -1970,13 +2047,9 @@ function Esp:TabESP(window, tabTitle)
         })
         fillGrad.Parent = boxFrame
 
-        local strokeOuter = Instance.new("UIStroke")
-        strokeOuter.Color = Color3.new(0, 0, 0)
-        strokeOuter.Thickness = 2
-        strokeOuter.Parent = boxFrame
-
         local strokeInner = Instance.new("UIStroke")
         strokeInner.Thickness = 1
+        strokeInner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         strokeInner.Parent = boxFrame
 
         local corners = {}
@@ -1984,6 +2057,7 @@ function Esp:TabESP(window, tabTitle)
             local c = Instance.new("Frame")
             c.BorderSizePixel = 0
             c.Visible = false
+            c.ZIndex = 3
             c.Parent = holder
             corners[i] = c
         end
@@ -1997,6 +2071,7 @@ function Esp:TabESP(window, tabTitle)
         nameLbl.TextColor3 = Color3.new(1, 1, 1)
         nameLbl.TextStrokeTransparency = 0.2
         nameLbl.Text = plr.Name
+        nameLbl.ZIndex = 4
         nameLbl.Parent = holder
 
         local itemLbl = Instance.new("TextLabel")
@@ -2007,6 +2082,7 @@ function Esp:TabESP(window, tabTitle)
         itemLbl.TextSize = 14
         itemLbl.TextColor3 = Library.Theme.Accent
         itemLbl.TextStrokeTransparency = 0.2
+        itemLbl.ZIndex = 4
         itemLbl.Parent = holder
 
         local hpBg = Instance.new("Frame")
@@ -2014,6 +2090,7 @@ function Esp:TabESP(window, tabTitle)
         hpBg.Size = UDim2.new(0, 3, 1, 0)
         hpBg.BackgroundColor3 = Color3.new(0, 0, 0)
         hpBg.BorderSizePixel = 0
+        hpBg.ZIndex = 3
         hpBg.Parent = holder
 
         local hpFill = Instance.new("Frame")
@@ -2021,6 +2098,7 @@ function Esp:TabESP(window, tabTitle)
         hpFill.Position = UDim2.fromScale(0, 1)
         hpFill.Size = UDim2.fromScale(1, 1)
         hpFill.BorderSizePixel = 0
+        hpFill.ZIndex = 4
         hpFill.Parent = hpBg
 
         local hpTxt = Instance.new("TextLabel")
@@ -2030,6 +2108,7 @@ function Esp:TabESP(window, tabTitle)
         hpTxt.Font = Enum.Font.Arcade
         hpTxt.TextSize = 13
         hpTxt.TextStrokeTransparency = 0.2
+        hpTxt.ZIndex = 4
         hpTxt.Parent = holder
 
         local tracer = Drawing and Drawing.new("Line") or nil
@@ -2050,6 +2129,7 @@ function Esp:TabESP(window, tabTitle)
 
         PlayerObjects[plr] = {
             Holder = holder,
+            OuterFrame = outerFrame,
             BoxFrame = boxFrame,
             StrokeOuter = strokeOuter,
             StrokeInner = strokeInner,
@@ -2092,7 +2172,9 @@ function Esp:TabESP(window, tabTitle)
             local fillOn = Library.Flags["esp_filled"] == true
             local fillCol = Library.Flags["esp_filled_color"] or Library.Theme.Accent
 
-            P_Box.Visible = boxOn or fillOn or Library.Flags["esp_nickname"] or Library.Flags["esp_hp_bar"] or Library.Flags["esp_item"]
+            local showBoxContainer = boxOn or fillOn or Library.Flags["esp_nickname"] or Library.Flags["esp_hp_bar"] or Library.Flags["esp_item"]
+            P_Box.Visible = showBoxContainer
+            P_Outer.Visible = showBoxContainer and boxOn and (boxMethod == "Normal")
             P_Box.BackgroundColor3 = fillCol:Lerp(Color3.new(1, 1, 1), 0.35)
             P_Box.BackgroundTransparency = fillOn and 0.25 or 1
 
@@ -2197,15 +2279,18 @@ function Esp:TabESP(window, tabTitle)
             obj.BoxFrame.BackgroundTransparency = fillOn and 0.25 or 1
 
             if boxOn and boxMethod == "Normal" then
+                obj.OuterFrame.Visible = true
                 obj.StrokeOuter.Enabled = true
                 obj.StrokeInner.Enabled = true
                 obj.StrokeInner.Color = boxCol
                 for _, c in ipairs(obj.Corners) do c.Visible = false end
             elseif boxOn and boxMethod == "Corners" then
+                obj.OuterFrame.Visible = false
                 obj.StrokeOuter.Enabled = false
                 obj.StrokeInner.Enabled = false
                 UpdateCorners(obj.Corners, width, height, boxCol)
             else
+                obj.OuterFrame.Visible = false
                 obj.StrokeOuter.Enabled = false
                 obj.StrokeInner.Enabled = false
                 for _, c in ipairs(obj.Corners) do c.Visible = false end
