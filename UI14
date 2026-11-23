@@ -1,7 +1,3 @@
--- ============================================================================
--- LeMOON / Klax-Style UI Library (Loadstring Module + Keybind Modes)
--- ============================================================================
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -18,15 +14,6 @@ local function GetSafeParent()
     end
     return CoreGui
 end
-
-local OldGui = GetSafeParent():FindFirstChild("LeMOON_Klax_UI_v2")
-if OldGui then OldGui:Destroy() end
-local OldEsp = GetSafeParent():FindFirstChild("LeMOON_WorldESP")
-if OldEsp then OldEsp:Destroy() end
-
--- ============================================================================
--- ГЛОБАЛЬНЫЕ ТАБЛИЦЫ И СИНТАКСИС
--- ============================================================================
 
 local Library = {
     Flags = {},
@@ -46,7 +33,7 @@ local Library = {
         Text = {}
     },
     MenuKeybind = Enum.KeyCode.RightControl,
-    ConfigFolder = "LeMOON_Configs",
+    ConfigFolder = "LemonchityDLC_Configs",
     ActiveWindow = nil,
     Notifications = {}
 }
@@ -138,10 +125,6 @@ local function MakeDraggable(dragHandle, targetFrame)
         end
     end)
 end
-
--- ============================================================================
--- ROOT GUI & СИСТЕМА НОТИФИКАЦИЙ
--- ============================================================================
 
 local RootGui = Instance.new("ScreenGui")
 RootGui.Name = "LeMOON_Klax_UI_v2"
@@ -265,9 +248,6 @@ function Library:Notify(options)
     end)
 end
 
--- ============================================================================
--- WATERMARK
--- ============================================================================
 
 function Library:CreateWatermark(options)
     options = options or {}
@@ -330,10 +310,6 @@ function Library:CreateWatermark(options)
 
     return wmObj
 end
-
--- ============================================================================
--- JSON CONFIG SYSTEM
--- ============================================================================
 
 local function EnsureConfigFolder()
     if isfolder and makefolder and not isfolder(Library.ConfigFolder) then
@@ -423,10 +399,6 @@ function Library:GetConfigList()
     return list
 end
 
--- ============================================================================
--- POPUP ДЛЯ KEYBIND MODE (Toggle / Hold / Always On)
--- ============================================================================
-
 local ActiveKeybindModePopup = nil
 
 local function OpenKeybindModePopup(anchorButton, currentMode, onModeSelected)
@@ -481,10 +453,6 @@ local function OpenKeybindModePopup(anchorButton, currentMode, onModeSelected)
         end)
     end
 end
-
--- ============================================================================
--- 2D COLORPICKER + HEX
--- ============================================================================
 
 local ActivePickerPopup = nil
 
@@ -673,10 +641,6 @@ local function OpenColorPickerPopup(anchorButton, defaultColor, onColorChanged)
         ActivePickerPopup = nil
     end)
 end
-
--- ============================================================================
--- ОКНО: Create:Window -> TABS -> PAGES
--- ============================================================================
 
 function Create:Window(options)
     options = options or {}
@@ -1112,10 +1076,6 @@ function Create:Window(options)
     return WindowObj
 end
 
--- ============================================================================
--- КОМПОНЕНТЫ UI (С ШЕСТЕРЁНКОЙ ДЛЯ KEYBIND: Toggle / Hold / Always On)
--- ============================================================================
-
 function Create:Toggle(section, options)
     options = options or {}
     local name = options.Name or "Toggle"
@@ -1243,7 +1203,6 @@ function Create:Toggle(section, options)
         Library.Flags[kbFlag] = currentKey
         Library.Flags[kbModeFlag] = kbMode
 
-        -- Кнопка выбора клавиши
         local bindBtn = Instance.new("TextButton")
         bindBtn.Size = UDim2.fromOffset(48, 16)
         bindBtn.BackgroundColor3 = Library.Theme.ElementBg
@@ -1256,7 +1215,6 @@ function Create:Toggle(section, options)
         bindBtn.Parent = addonsFrame
         Instance.new("UICorner", bindBtn).CornerRadius = UDim.new(0, 3)
 
-        -- Кнопка-шестерёнка настроек режима (Toggle / Hold / Always On)
         local gearBtn = Instance.new("TextButton")
         gearBtn.Size = UDim2.fromOffset(16, 16)
         gearBtn.BackgroundColor3 = Library.Theme.ElementBg
@@ -1664,10 +1622,6 @@ function Add:Label(section, text)
     return lbl
 end
 
--- ============================================================================
--- ВКЛАДКА КОНФИГОВ И ТЕМЫ: Library.Addconftab(Window)
--- ============================================================================
-
 function Library.Addconftab(window)
     window = window or Library.ActiveWindow
     local SettingsTab = window:Tab({ Name = "Settings" })
@@ -1765,10 +1719,6 @@ function Library.Addconftab(window)
 
     return SettingsTab
 end
-
--- ============================================================================
--- ПОЛНОЦЕННЫЙ МОДУЛЬ ESP + 3D ESP PREVIEW: Esp:TabESP(Window) / Window:Esp()
--- ============================================================================
 
 local R15_Bones = {
     {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
@@ -1977,7 +1927,7 @@ function Esp:TabESP(window, tabTitle)
     P_Item.Parent = P_Box
 
     local EspWorldOverlay = Instance.new("ScreenGui")
-    EspWorldOverlay.Name = "LeMOON_WorldESP"
+    EspWorldOverlay.Name = "Lemonchity_ESP"
     EspWorldOverlay.ResetOnSpawn = false
     EspWorldOverlay.IgnoreGuiInset = true
     EspWorldOverlay.Parent = GetSafeParent()
