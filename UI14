@@ -777,7 +777,8 @@ function Create:Window(options)
     local TitleLbl = Instance.new("TextLabel")
     TitleLbl.BackgroundTransparency = 1
     TitleLbl.Position = UDim2.fromOffset(50, 8)
-    TitleLbl.Size = UDim2.fromOffset(115, 20)
+    TitleLbl.Size = UDim2.new(0, 0, 0, 20)
+    TitleLbl.AutomaticSize = Enum.AutomaticSize.X
     TitleLbl.Font = Enum.Font.Arcade
     TitleLbl.TextSize = 21
     TitleLbl.TextColor3 = Library.Theme.Text
@@ -789,7 +790,8 @@ function Create:Window(options)
     local SubLbl = Instance.new("TextLabel")
     SubLbl.BackgroundTransparency = 1
     SubLbl.Position = UDim2.fromOffset(50, 28)
-    SubLbl.Size = UDim2.fromOffset(115, 14)
+    SubLbl.Size = UDim2.new(0, 0, 0, 14)
+    SubLbl.AutomaticSize = Enum.AutomaticSize.X
     SubLbl.Font = Enum.Font.Arcade
     SubLbl.TextSize = 12
     SubLbl.TextColor3 = Library.Theme.Accent
