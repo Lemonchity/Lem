@@ -1,22 +1,33 @@
 -- ============================================================================
--- LeMOON / Klax-Style UI Library (Clean UI Framework)
+-- LeMOON / Klax-Style UI Library (Loadstring Module + Keybind Modes + Fixed Box ESP)
 -- ============================================================================
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Camera = workspace.CurrentCamera
 
-local OldGui = PlayerGui:FindFirstChild("LeMOON_Klax_UI_v2")
+local function GetSafeParent()
+    if gethui then
+        return gethui()
+    end
+    return CoreGui
+end
+
+local OldGui = GetSafeParent():FindFirstChild("LeMOON_Klax_UI_v2")
 if OldGui then OldGui:Destroy() end
+local OldEsp = GetSafeParent():FindFirstChild("LeMOON_WorldESP")
+if OldEsp then OldEsp:Destroy() end
 
 -- ============================================================================
 -- ГЛОБАЛЬНЫЕ ТАБЛИЦЫ И СИНТАКСИС
 -- ============================================================================
+
 local Library = {
     Flags = {},
     FlagObjects = {},
@@ -35,6 +46,7 @@ local Library = {
         Text = {}
     },
     MenuKeybind = Enum.KeyCode.RightControl,
+    ConfigFolder = "LeMOON_Configs",
     ActiveWindow = nil,
     Notifications = {}
 }
@@ -42,10 +54,12 @@ local Library = {
 local Create = {}
 local Add = {}
 local add = {}
+local Esp = {}
 
 Library.Create = Create
 Library.Add = Add
 Library.add = add
+Library.Esp = Esp
 
 local function Tween(obj, time, props, style, dir)
     local info = TweenInfo.new(
@@ -128,12 +142,13 @@ end
 -- ============================================================================
 -- ROOT GUI & СИСТЕМА НОТИФИКАЦИЙ
 -- ============================================================================
+
 local RootGui = Instance.new("ScreenGui")
 RootGui.Name = "LeMOON_Klax_UI_v2"
 RootGui.ResetOnSpawn = false
 RootGui.IgnoreGuiInset = true
 RootGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-RootGui.Parent = PlayerGui
+RootGui.Parent = GetSafeParent()
 
 local NotifyContainer = Instance.new("Frame")
 NotifyContainer.Name = "Notifications"
@@ -167,6 +182,7 @@ function Library:Notify(options)
     card.ClipsDescendants = true
     card.ZIndex = 101
     card.Parent = NotifyContainer
+
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
     ApplySnakeStroke(card, 1.4, 130)
 
@@ -252,6 +268,7 @@ end
 -- ============================================================================
 -- WATERMARK
 -- ============================================================================
+
 function Library:CreateWatermark(options)
     options = options or {}
     local wmFrame = Instance.new("Frame")
@@ -262,6 +279,7 @@ function Library:CreateWatermark(options)
     wmFrame.BorderSizePixel = 0
     wmFrame.ZIndex = 90
     wmFrame.Parent = RootGui
+
     Instance.new("UICorner", wmFrame).CornerRadius = UDim.new(0, 6)
     ApplySnakeStroke(wmFrame, 1.6, 110)
     MakeDraggable(wmFrame, wmFrame)
@@ -309,13 +327,19 @@ function Library:CreateWatermark(options)
             end
         end)
     end
+
     return wmObj
 end
 
 -- ============================================================================
--- JSON SERIALIZATION (В ПАМЯТИ / ДЛЯ DATASTORE)
+-- JSON CONFIG SYSTEM
 -- ============================================================================
-local SavedPresets = {}
+
+local function EnsureConfigFolder()
+    if isfolder and makefolder and not isfolder(Library.ConfigFolder) then
+        makefolder(Library.ConfigFolder)
+    end
+end
 
 local function SerializeValue(val)
     if typeof(val) == "Color3" then
@@ -340,18 +364,39 @@ local function DeserializeValue(val)
     return val
 end
 
-function Library:ExportConfigJSON()
+function Library:SaveConfig(configName)
+    if not configName or configName == "" then
+        Library:Notify({ Title = "Config Error", Text = "Enter config name first!", Duration = 3 })
+        return
+    end
+    EnsureConfigFolder()
+
     local data = {}
     for flag, value in pairs(Library.Flags) do
         data[flag] = SerializeValue(value)
     end
-    return HttpService:JSONEncode(data)
+
+    local json = HttpService:JSONEncode(data)
+    if writefile then
+        writefile(Library.ConfigFolder .. "/" .. configName .. ".json", json)
+        Library:Notify({ Title = "Config Saved", Text = "Saved: " .. configName .. ".json", Duration = 3 })
+    else
+        Library:Notify({ Title = "Executor Warning", Text = "writefile not supported", Duration = 3 })
+    end
 end
 
-function Library:ImportConfigJSON(jsonString)
+function Library:LoadConfig(configName)
+    if not configName or configName == "" then return end
+    local path = Library.ConfigFolder .. "/" .. configName .. ".json"
+    if not (isfile and readfile and isfile(path)) then
+        Library:Notify({ Title = "Config Error", Text = "Config not found!", Duration = 3 })
+        return
+    end
+
     local ok, decoded = pcall(function()
-        return HttpService:JSONDecode(jsonString)
+        return HttpService:JSONDecode(readfile(path))
     end)
+
     if ok and type(decoded) == "table" then
         for flag, rawVal in pairs(decoded) do
             local val = DeserializeValue(rawVal)
@@ -360,42 +405,30 @@ function Library:ImportConfigJSON(jsonString)
                 Library.FlagObjects[flag]:Set(val)
             end
         end
-        return true
-    end
-    return false
-end
-
-function Library:SaveConfig(configName)
-    if not configName or configName == "" then
-        Library:Notify({ Title = "Config Error", Text = "Enter config name first!", Duration = 3 })
-        return
-    end
-    SavedPresets[configName] = Library:ExportConfigJSON()
-    Library:Notify({ Title = "Config Saved", Text = "Saved preset: " .. configName, Duration = 3 })
-end
-
-function Library:LoadConfig(configName)
-    if not configName or not SavedPresets[configName] then
-        Library:Notify({ Title = "Config Error", Text = "Preset not found!", Duration = 3 })
-        return
-    end
-    if Library:ImportConfigJSON(SavedPresets[configName]) then
-        Library:Notify({ Title = "Config Loaded", Text = "Loaded preset: " .. configName, Duration = 3 })
+        Library:Notify({ Title = "Config Loaded", Text = "Loaded: " .. configName .. ".json", Duration = 3 })
     end
 end
 
 function Library:GetConfigList()
+    EnsureConfigFolder()
     local list = {}
-    for name in pairs(SavedPresets) do
-        table.insert(list, name)
+    if listfiles and isfolder and isfolder(Library.ConfigFolder) then
+        for _, file in ipairs(listfiles(Library.ConfigFolder)) do
+            local name = file:match("([^/\\]+)%.json$")
+            if name then
+                table.insert(list, name)
+            end
+        end
     end
-    return #list > 0 and list or {"default"}
+    return list
 end
 
 -- ============================================================================
 -- POPUP ДЛЯ KEYBIND MODE (Toggle / Hold / Always On)
 -- ============================================================================
+
 local ActiveKeybindModePopup = nil
+
 local function OpenKeybindModePopup(anchorButton, currentMode, onModeSelected)
     if ActiveKeybindModePopup then
         ActiveKeybindModePopup:Destroy()
@@ -415,6 +448,7 @@ local function OpenKeybindModePopup(anchorButton, currentMode, onModeSelected)
     popup.ZIndex = 160
     popup.Parent = RootGui
     ActiveKeybindModePopup = popup
+
     Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 5)
     ApplySnakeStroke(popup, 1.3, 120)
 
@@ -451,7 +485,9 @@ end
 -- ============================================================================
 -- 2D COLORPICKER + HEX
 -- ============================================================================
+
 local ActivePickerPopup = nil
+
 local function Color3ToHex(c)
     return string.format("#%02X%02X%02X", math.floor(c.R * 255), math.floor(c.G * 255), math.floor(c.B * 255))
 end
@@ -476,6 +512,7 @@ local function OpenColorPickerPopup(anchorButton, defaultColor, onColorChanged)
     end
 
     local h, s, v = defaultColor:ToHSV()
+
     local popup = Instance.new("Frame")
     popup.Name = "ColorPicker2D"
     popup.Size = UDim2.fromOffset(210, 215)
@@ -488,6 +525,7 @@ local function OpenColorPickerPopup(anchorButton, defaultColor, onColorChanged)
     popup.ZIndex = 150
     popup.Parent = RootGui
     ActivePickerPopup = popup
+
     Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 6)
     ApplySnakeStroke(popup, 1.4, 100)
 
@@ -586,6 +624,7 @@ local function OpenColorPickerPopup(anchorButton, defaultColor, onColorChanged)
     end
 
     local draggingSV, draggingHue = false, false
+
     svBox.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             draggingSV = true
@@ -636,8 +675,9 @@ local function OpenColorPickerPopup(anchorButton, defaultColor, onColorChanged)
 end
 
 -- ============================================================================
--- ОКНО: Create:Window -> TABS -> PAGES (С ФИКСОМ НАЛОЖЕНИЯ TITLE НА TABS)
+-- ОКНО: Create:Window -> TABS -> PAGES
 -- ============================================================================
+
 function Create:Window(options)
     options = options or {}
     local winName = options.Name or "klax"
@@ -653,6 +693,7 @@ function Create:Window(options)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = RootGui
     table.insert(Library.ThemeObjects.Background, MainFrame)
+
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 6)
     ApplySnakeStroke(MainFrame, 2, 85)
 
@@ -736,8 +777,7 @@ function Create:Window(options)
     local TitleLbl = Instance.new("TextLabel")
     TitleLbl.BackgroundTransparency = 1
     TitleLbl.Position = UDim2.fromOffset(50, 8)
-    TitleLbl.Size = UDim2.new(0, 0, 0, 20)
-    TitleLbl.AutomaticSize = Enum.AutomaticSize.X
+    TitleLbl.Size = UDim2.fromOffset(115, 20)
     TitleLbl.Font = Enum.Font.Arcade
     TitleLbl.TextSize = 21
     TitleLbl.TextColor3 = Library.Theme.Text
@@ -749,8 +789,7 @@ function Create:Window(options)
     local SubLbl = Instance.new("TextLabel")
     SubLbl.BackgroundTransparency = 1
     SubLbl.Position = UDim2.fromOffset(50, 28)
-    SubLbl.Size = UDim2.new(0, 0, 0, 14)
-    SubLbl.AutomaticSize = Enum.AutomaticSize.X
+    SubLbl.Size = UDim2.fromOffset(115, 14)
     SubLbl.Font = Enum.Font.Arcade
     SubLbl.TextSize = 12
     SubLbl.TextColor3 = Library.Theme.Accent
@@ -770,17 +809,6 @@ function Create:Window(options)
     TabsScroll.ScrollingDirection = Enum.ScrollingDirection.X
     TabsScroll.ZIndex = 4
     TabsScroll.Parent = HeaderArea
-
-    local function UpdateTabsLayout()
-        local textWidth = math.max(TitleLbl.AbsoluteSize.X, SubLbl.AbsoluteSize.X)
-        local startX = 50 + textWidth + 18
-        TabsScroll.Position = UDim2.new(0, startX, 0, 8)
-        TabsScroll.Size = UDim2.new(1, -(startX + 12), 0, 34)
-    end
-
-    TitleLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsLayout)
-    SubLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsLayout)
-    task.defer(UpdateTabsLayout)
 
     local TabsLayout = Instance.new("UIListLayout")
     TabsLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -904,6 +932,7 @@ function Create:Window(options)
 
         tabBtn.MouseButton1Click:Connect(ActivateThisTab)
         table.insert(WindowObj.Tabs, TabObj)
+
         if #WindowObj.Tabs == 1 then
             ActivateThisTab()
         end
@@ -1002,6 +1031,7 @@ function Create:Window(options)
 
             pagePill.MouseButton1Click:Connect(ActivateThisPage)
             table.insert(TabObj.Pages, PageObj)
+
             if #TabObj.Pages == 1 then
                 ActivateThisPage()
             end
@@ -1058,24 +1088,34 @@ function Create:Window(options)
                     Container = container,
                     Box = box
                 }
+
                 function SectionObj:Toggle(opts) return Create:Toggle(SectionObj, opts) end
                 function SectionObj:Slider(opts) return Add:Slider(SectionObj, opts) end
                 function SectionObj:Dropdown(opts) return Add:Dropdown(SectionObj, opts) end
                 function SectionObj:Textbox(opts) return Add:Textbox(SectionObj, opts) end
                 function SectionObj:Button(opts) return Add:Button(SectionObj, opts) end
                 function SectionObj:Label(text) return Add:Label(SectionObj, text) end
+
                 return SectionObj
             end
+
             return PageObj
         end
+
         return TabObj
     end
+
+    function WindowObj:Esp(tabName)
+        return Esp:TabESP(WindowObj, tabName or "Visuals")
+    end
+
     return WindowObj
 end
 
 -- ============================================================================
--- КОМПОНЕНТЫ UI (ВКЛЮЧАЯ MULTI-DROPDOWN С LIMIT)
+-- КОМПОНЕНТЫ UI (С ШЕСТЕРЁНКОЙ ДЛЯ KEYBIND: Toggle / Hold / Always On)
 -- ============================================================================
+
 function Create:Toggle(section, options)
     options = options or {}
     local name = options.Name or "Toggle"
@@ -1133,6 +1173,7 @@ function Create:Toggle(section, options)
     addonsLayout.Parent = addonsFrame
 
     local ToggleObj = { Row = row, Addons = addonsFrame }
+
     function ToggleObj:Set(newState)
         state = newState
         Library.Flags[flag] = state
@@ -1149,6 +1190,7 @@ function Create:Toggle(section, options)
     local function OnClick()
         ToggleObj:Set(not state)
     end
+
     checkBtn.MouseButton1Click:Connect(OnClick)
     lbl.MouseButton1Click:Connect(OnClick)
 
@@ -1159,6 +1201,7 @@ function Create:Toggle(section, options)
         local cpCallback = cpOpts.Callback or function() end
 
         Library.Flags[cpFlag] = cpDefault
+
         local swatch = Instance.new("TextButton")
         swatch.Size = UDim2.fromOffset(22, 14)
         swatch.BackgroundColor3 = cpDefault
@@ -1225,6 +1268,7 @@ function Create:Toggle(section, options)
         Instance.new("UICorner", gearBtn).CornerRadius = UDim.new(0, 3)
 
         local kbObj = {}
+
         function kbObj:SetMode(newMode)
             kbMode = newMode
             Library.Flags[kbModeFlag] = kbMode
@@ -1260,6 +1304,7 @@ function Create:Toggle(section, options)
         gearBtn.MouseLeave:Connect(function()
             Tween(gearBtn, 0.15, { TextColor3 = Library.Theme.SubText })
         end)
+
         gearBtn.MouseButton1Click:Connect(function()
             OpenKeybindModePopup(gearBtn, kbMode, function(selectedMode)
                 kbObj:SetMode(selectedMode)
@@ -1406,13 +1451,11 @@ function Add:Slider(section, options)
             UpdateFromInput(inp)
         end
     end)
-
     UserInputService.InputChanged:Connect(function(inp)
         if sliding and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
             UpdateFromInput(inp)
         end
     end)
-
     UserInputService.InputEnded:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             sliding = false
@@ -1427,28 +1470,11 @@ function Add:Dropdown(section, options)
     options = options or {}
     local name = options.Name or "Dropdown"
     local listItems = options.Options or {"Option 1", "Option 2"}
-    local multi = options.Multi or false
-    local limit = options.Limit or math.huge
-    local default = options.Default
+    local default = options.Default or listItems[1] or "None"
     local flag = options.Flag or name
     local callback = options.Callback or function() end
 
-    local selected = {}
-    if multi then
-        if type(default) == "table" then
-            for _, v in ipairs(default) do
-                if #selected < limit and not table.find(selected, v) then
-                    table.insert(selected, v)
-                end
-            end
-        elseif default ~= nil and limit >= 1 then
-            table.insert(selected, default)
-        end
-        Library.Flags[flag] = selected
-    else
-        selected = default or listItems[1] or "None"
-        Library.Flags[flag] = selected
-    end
+    Library.Flags[flag] = default
 
     local wrapper = Instance.new("Frame")
     wrapper.BackgroundTransparency = 1
@@ -1476,7 +1502,7 @@ function Add:Dropdown(section, options)
     mainBtn.Font = Enum.Font.Arcade
     mainBtn.TextSize = 14
     mainBtn.TextColor3 = Library.Theme.Text
-    mainBtn.TextTruncate = Enum.TextTruncate.AtEnd
+    mainBtn.Text = "  " .. tostring(default) .. "  v"
     mainBtn.TextXAlignment = Enum.TextXAlignment.Left
     mainBtn.ZIndex = 11
     mainBtn.Parent = wrapper
@@ -1494,51 +1520,13 @@ function Add:Dropdown(section, options)
     local listLayout = Instance.new("UIListLayout")
     listLayout.Parent = listHolder
 
-    local optionButtons = {}
     local opened = false
-
-    local function UpdateDisplay()
-        if multi then
-            local display = (#selected > 0) and table.concat(selected, ", ") or "None"
-            mainBtn.Text = "  " .. display .. "  v"
-            for opt, btn in pairs(optionButtons) do
-                local isSelected = table.find(selected, opt) ~= nil
-                btn.TextColor3 = isSelected and Library.Theme.Accent or Library.Theme.Text
-                btn.BackgroundTransparency = isSelected and 0.1 or 0.35
-            end
-        else
-            mainBtn.Text = "  " .. tostring(selected) .. "  v"
-            for opt, btn in pairs(optionButtons) do
-                local isSelected = (selected == opt)
-                btn.TextColor3 = isSelected and Library.Theme.Accent or Library.Theme.Text
-                btn.BackgroundTransparency = isSelected and 0.1 or 0.35
-            end
-        end
-    end
-
     local DropdownObj = {}
 
     function DropdownObj:Set(val)
-        if multi then
-            selected = {}
-            if type(val) == "table" then
-                for _, v in ipairs(val) do
-                    if #selected < limit and not table.find(selected, v) then
-                        table.insert(selected, v)
-                    end
-                end
-            elseif val ~= nil and limit >= 1 then
-                table.insert(selected, val)
-            end
-            Library.Flags[flag] = selected
-            UpdateDisplay()
-            callback(selected)
-        else
-            selected = val
-            Library.Flags[flag] = selected
-            UpdateDisplay()
-            callback(selected)
-        end
+        Library.Flags[flag] = val
+        mainBtn.Text = "  " .. tostring(val) .. "  v"
+        callback(val)
     end
 
     function DropdownObj:Refresh(newItems)
@@ -1547,7 +1535,6 @@ function Add:Dropdown(section, options)
                 child:Destroy()
             end
         end
-        table.clear(optionButtons)
         listItems = newItems
         listHolder.Size = UDim2.new(0.53, 0, 0, #listItems * 22)
 
@@ -1555,7 +1542,7 @@ function Add:Dropdown(section, options)
             local optBtn = Instance.new("TextButton")
             optBtn.Size = UDim2.new(1, 0, 0, 22)
             optBtn.BackgroundColor3 = Library.Theme.ElementBg
-            optBtn.BackgroundTransparency = 0.35
+            optBtn.BackgroundTransparency = 0.3
             optBtn.BorderSizePixel = 0
             optBtn.Font = Enum.Font.Arcade
             optBtn.TextSize = 14
@@ -1564,32 +1551,13 @@ function Add:Dropdown(section, options)
             optBtn.TextXAlignment = Enum.TextXAlignment.Left
             optBtn.ZIndex = 13
             optBtn.Parent = listHolder
-            optionButtons[opt] = optBtn
 
             optBtn.MouseButton1Click:Connect(function()
-                if multi then
-                    local idx = table.find(selected, opt)
-                    if idx then
-                        table.remove(selected, idx)
-                    else
-                        if #selected < limit then
-                            table.insert(selected, opt)
-                        elseif limit == 1 then
-                            selected = { opt }
-                        end
-                    end
-                    Library.Flags[flag] = selected
-                    UpdateDisplay()
-                    callback(selected)
-                else
-                    DropdownObj:Set(opt)
-                    opened = false
-                    Tween(wrapper, 0.2, { Size = UDim2.new(1, 0, 0, 26) })
-                end
+                DropdownObj:Set(opt)
+                opened = false
+                Tween(wrapper, 0.2, { Size = UDim2.new(1, 0, 0, 26) })
             end)
         end
-
-        UpdateDisplay()
     end
 
     DropdownObj:Refresh(listItems)
@@ -1676,6 +1644,7 @@ function Add:Button(section, options)
         end)
         callback()
     end)
+
     return btn
 end
 
@@ -1696,10 +1665,12 @@ end
 -- ============================================================================
 -- ВКЛАДКА КОНФИГОВ И ТЕМЫ: Library.Addconftab(Window)
 -- ============================================================================
+
 function Library.Addconftab(window)
     window = window or Library.ActiveWindow
     local SettingsTab = window:Tab({ Name = "Settings" })
     local MainPage = SettingsTab:Page({ Name = "Page 1" })
+
     local MenuSec = MainPage:Section({ Name = "Menu & Theme", Side = "Left" })
 
     local MenuBindToggle = Create:Toggle(MenuSec, {
@@ -1754,7 +1725,8 @@ function Library.Addconftab(window)
         end
     })
 
-    local CfgSec = MainPage:Section({ Name = "Configs", Side = "Right" })
+    local CfgSec = MainPage:Section({ Name = "JSON Configs", Side = "Right" })
+
     local cfgNameBox = Add:Textbox(CfgSec, {
         Name = "Config Name",
         Placeholder = "default",
@@ -1773,7 +1745,7 @@ function Library.Addconftab(window)
     })
 
     Add:Button(CfgSec, {
-        Name = "Save Config",
+        Name = "Save Config (JSON)",
         Callback = function()
             local name = Library.Flags["cfg_input_name"]
             Library:SaveConfig(name)
@@ -1782,7 +1754,7 @@ function Library.Addconftab(window)
     })
 
     Add:Button(CfgSec, {
-        Name = "Load Config",
+        Name = "Load Config (JSON)",
         Callback = function()
             local name = Library.Flags["cfg_input_name"]
             Library:LoadConfig(name)
@@ -1790,6 +1762,604 @@ function Library.Addconftab(window)
     })
 
     return SettingsTab
+end
+
+-- ============================================================================
+-- ПОЛНОЦЕННЫЙ МОДУЛЬ ESP + 3D ESP PREVIEW: Esp:TabESP(Window) / Window:Esp()
+-- ============================================================================
+
+local R15_Bones = {
+    {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"},
+    {"UpperTorso", "LeftUpperArm"}, {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"},
+    {"UpperTorso", "RightUpperArm"}, {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+    {"LowerTorso", "LeftUpperLeg"}, {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"},
+    {"LowerTorso", "RightUpperLeg"}, {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}
+}
+local R6_Bones = {
+    {"Head", "Torso"}, {"Torso", "Left Arm"}, {"Torso", "Right Arm"},
+    {"Torso", "Left Leg"}, {"Torso", "Right Leg"}
+}
+
+local function GetHealthColor(ratio)
+    ratio = math.clamp(ratio, 0, 1)
+    if ratio > 0.5 then
+        return Color3.fromRGB(255, 255, 0):Lerp(Color3.fromRGB(0, 255, 100), (ratio - 0.5) * 2)
+    else
+        return Color3.fromRGB(255, 45, 45):Lerp(Color3.fromRGB(255, 255, 0), ratio * 2)
+    end
+end
+
+function Esp:TabESP(window, tabTitle)
+    window = window or Library.ActiveWindow
+    local EspTab = window:Tab({ Name = tabTitle or "Visuals" })
+    local Page1 = EspTab:Page({ Name = "Page 1" })
+
+    local LeftGroup = Page1:Section({ Name = "ESP", Side = "Left" })
+
+    Create:Toggle(LeftGroup, { Name = "Enabled", Default = true, Flag = "esp_enabled" })
+
+    local T_Box = Create:Toggle(LeftGroup, { Name = "Box ESP", Default = true, Flag = "esp_box" })
+    T_Box:AddColorpicker({ Default = Color3.fromRGB(0, 255, 150), Flag = "esp_box_color" })
+
+    Add:Dropdown(LeftGroup, {
+        Name = "Box Method",
+        Options = {"Normal", "Corners"},
+        Default = "Normal",
+        Flag = "esp_box_method"
+    })
+
+    local T_Filled = Create:Toggle(LeftGroup, { Name = "Filled Box", Default = true, Flag = "esp_filled" })
+    T_Filled:AddColorpicker({ Default = Color3.fromRGB(0, 255, 150), Flag = "esp_filled_color" })
+
+    Create:Toggle(LeftGroup, { Name = "Health Bar", Default = true, Flag = "esp_hp_bar" })
+    Create:Toggle(LeftGroup, { Name = "Health Text", Default = true, Flag = "esp_hp_text" })
+    Create:Toggle(LeftGroup, { Name = "Nickname", Default = true, Flag = "esp_nickname" })
+    Create:Toggle(LeftGroup, { Name = "Item ESP", Default = true, Flag = "esp_item" })
+
+    local T_Tracers = Create:Toggle(LeftGroup, { Name = "Tracers", Default = false, Flag = "esp_tracers" })
+    T_Tracers:AddColorpicker({ Default = Color3.fromRGB(0, 255, 150), Flag = "esp_tracer_color" })
+
+    Add:Dropdown(LeftGroup, {
+        Name = "Tracer Origin",
+        Options = {"Mouse", "Bottom", "Top"},
+        Default = "Bottom",
+        Flag = "esp_tracer_origin"
+    })
+
+    local T_Chams = Create:Toggle(LeftGroup, { Name = "Chams (ForceField)", Default = false, Flag = "esp_chams" })
+    T_Chams:AddColorpicker({ Default = Color3.fromRGB(0, 255, 150), Flag = "esp_chams_color" })
+
+    local T_Skeleton = Create:Toggle(LeftGroup, { Name = "Skeleton ESP", Default = false, Flag = "esp_skeleton" })
+    T_Skeleton:AddColorpicker({ Default = Color3.fromRGB(255, 255, 255), Flag = "esp_skeleton_color" })
+
+    Create:Toggle(LeftGroup, { Name = "Team Check", Default = false, Flag = "esp_teamcheck" })
+    Create:Toggle(LeftGroup, { Name = "Dead Check", Default = true, Flag = "esp_deadcheck" })
+
+    local RightGroup = Page1:Section({ Name = "ESP Preview", Side = "Right" })
+
+    local Viewport = Instance.new("ViewportFrame")
+    Viewport.Size = UDim2.new(1, 0, 0, 325)
+    Viewport.BackgroundColor3 = Color3.fromRGB(11, 14, 15)
+    Viewport.BorderSizePixel = 0
+    Viewport.Ambient = Color3.fromRGB(165, 165, 165)
+    Viewport.LightColor = Color3.fromRGB(255, 255, 255)
+    Viewport.ZIndex = 8
+    Viewport.Parent = RightGroup.Container
+    Instance.new("UICorner", Viewport).CornerRadius = UDim.new(0, 4)
+
+    local World = Instance.new("WorldModel")
+    World.Parent = Viewport
+
+    local PreviewCam = Instance.new("Camera")
+    PreviewCam.Parent = Viewport
+    Viewport.CurrentCamera = PreviewCam
+
+    local camYaw = 0
+    local rotatingPreview = false
+    local lastMouseX = 0
+
+    Viewport.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            rotatingPreview = true
+            lastMouseX = inp.Position.X
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(inp)
+        if rotatingPreview and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+            local dx = inp.Position.X - lastMouseX
+            lastMouseX = inp.Position.X
+            camYaw = camYaw - dx * 0.015
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            rotatingPreview = false
+        end
+    end)
+
+    task.spawn(function()
+        local ok, rig = pcall(function()
+            return Players:CreateHumanoidModelFromUserId(LocalPlayer.UserId)
+        end)
+        if ok and rig then
+            rig.Parent = World
+            rig:PivotTo(CFrame.new(0, 0, 0) * CFrame.Angles(0, math.rad(180), 0))
+        end
+    end)
+
+    -- Разделённые контейнеры для 3D Preview (чтобы чёрный контур не перекрывал цветной)
+    local P_Outer = Instance.new("Frame")
+    P_Outer.Size = UDim2.fromOffset(115, 200)
+    P_Outer.Position = UDim2.new(0.5, -57, 0.5, -95)
+    P_Outer.BackgroundTransparency = 1
+    P_Outer.BorderSizePixel = 0
+    P_Outer.ZIndex = 9
+    P_Outer.Parent = Viewport
+
+    local P_StrokeOuter = Instance.new("UIStroke")
+    P_StrokeOuter.Color = Color3.new(0, 0, 0)
+    P_StrokeOuter.Thickness = 2
+    P_StrokeOuter.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    P_StrokeOuter.Parent = P_Outer
+
+    local P_Box = Instance.new("Frame")
+    P_Box.Size = UDim2.fromOffset(115, 200)
+    P_Box.Position = UDim2.new(0.5, -57, 0.5, -95)
+    P_Box.BackgroundColor3 = Library.Theme.Accent
+    P_Box.BackgroundTransparency = 0.85
+    P_Box.BorderSizePixel = 0
+    P_Box.ZIndex = 10
+    P_Box.Parent = Viewport
+
+    local P_FillGrad = Instance.new("UIGradient")
+    P_FillGrad.Rotation = 90
+    P_FillGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0.0, 0.92),
+        NumberSequenceKeypoint.new(0.5, 0.35),
+        NumberSequenceKeypoint.new(1.0, 0.92)
+    })
+    P_FillGrad.Parent = P_Box
+
+    local P_StrokeInner = Instance.new("UIStroke")
+    P_StrokeInner.Color = Library.Theme.Accent
+    P_StrokeInner.Thickness = 1
+    P_StrokeInner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    P_StrokeInner.Parent = P_Box
+
+    local P_Corners = {}
+    for i = 1, 8 do
+        local line = Instance.new("Frame")
+        line.BorderSizePixel = 0
+        line.BackgroundColor3 = Library.Theme.Accent
+        line.Visible = false
+        line.ZIndex = 11
+        line.Parent = P_Box
+        P_Corners[i] = line
+    end
+
+    local P_Name = Instance.new("TextLabel")
+    P_Name.BackgroundTransparency = 1
+    P_Name.Position = UDim2.new(0, 0, 0, -18)
+    P_Name.Size = UDim2.new(1, 0, 0, 16)
+    P_Name.Font = Enum.Font.Arcade
+    P_Name.TextSize = 14
+    P_Name.TextColor3 = Color3.new(1, 1, 1)
+    P_Name.Text = LocalPlayer.Name
+    P_Name.ZIndex = 12
+    P_Name.Parent = P_Box
+
+    local P_HpBg = Instance.new("Frame")
+    P_HpBg.Position = UDim2.fromOffset(-7, 0)
+    P_HpBg.Size = UDim2.new(0, 3, 1, 0)
+    P_HpBg.BackgroundColor3 = Color3.new(0, 0, 0)
+    P_HpBg.BorderSizePixel = 0
+    P_HpBg.ZIndex = 11
+    P_HpBg.Parent = P_Box
+
+    local P_HpFill = Instance.new("Frame")
+    P_HpFill.Size = UDim2.fromScale(1, 1)
+    P_HpFill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    P_HpFill.BorderSizePixel = 0
+    P_HpFill.ZIndex = 12
+    P_HpFill.Parent = P_HpBg
+
+    local P_HpText = Instance.new("TextLabel")
+    P_HpText.BackgroundTransparency = 1
+    P_HpText.Position = UDim2.fromOffset(-34, -2)
+    P_HpText.Size = UDim2.fromOffset(25, 14)
+    P_HpText.Font = Enum.Font.Arcade
+    P_HpText.TextSize = 12
+    P_HpText.TextColor3 = Color3.fromRGB(0, 255, 100)
+    P_HpText.Text = "100"
+    P_HpText.ZIndex = 12
+    P_HpText.Parent = P_Box
+
+    local P_Item = Instance.new("TextLabel")
+    P_Item.BackgroundTransparency = 1
+    P_Item.Position = UDim2.new(0, 0, 1, 3)
+    P_Item.Size = UDim2.new(1, 0, 0, 16)
+    P_Item.Font = Enum.Font.Arcade
+    P_Item.TextSize = 13
+    P_Item.TextColor3 = Library.Theme.Accent
+    P_Item.Text = "[Katana]"
+    P_Item.ZIndex = 12
+    P_Item.Parent = P_Box
+
+    local EspWorldOverlay = Instance.new("ScreenGui")
+    EspWorldOverlay.Name = "LeMOON_WorldESP"
+    EspWorldOverlay.ResetOnSpawn = false
+    EspWorldOverlay.IgnoreGuiInset = true
+    EspWorldOverlay.Parent = GetSafeParent()
+
+    local PlayerObjects = {}
+    local SavedChams = {}
+
+    local function CleanupPlayer(plr)
+        local obj = PlayerObjects[plr]
+        if obj then
+            if obj.Holder then obj.Holder:Destroy() end
+            if obj.Tracer then obj.Tracer:Remove() end
+            if obj.Bones then
+                for _, l in ipairs(obj.Bones) do l:Remove() end
+            end
+            PlayerObjects[plr] = nil
+        end
+    end
+
+    local function CreatePlayerESP(plr)
+        if plr == LocalPlayer then return end
+        CleanupPlayer(plr)
+
+        local holder = Instance.new("Frame")
+        holder.BackgroundTransparency = 1
+        holder.Visible = false
+        holder.Parent = EspWorldOverlay
+
+        -- Внешний чёрный контур на отдельном Frame (чтобы не конфликтовал с цветным)
+        local outerFrame = Instance.new("Frame")
+        outerFrame.Name = "OuterOutline"
+        outerFrame.Size = UDim2.fromScale(1, 1)
+        outerFrame.BackgroundTransparency = 1
+        outerFrame.BorderSizePixel = 0
+        outerFrame.ZIndex = 1
+        outerFrame.Parent = holder
+
+        local strokeOuter = Instance.new("UIStroke")
+        strokeOuter.Color = Color3.new(0, 0, 0)
+        strokeOuter.Thickness = 2
+        strokeOuter.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        strokeOuter.Parent = outerFrame
+
+        -- Внутренний бокс с заливкой и цветным контуром
+        local boxFrame = Instance.new("Frame")
+        boxFrame.Name = "InnerBox"
+        boxFrame.Size = UDim2.fromScale(1, 1)
+        boxFrame.BorderSizePixel = 0
+        boxFrame.ZIndex = 2
+        boxFrame.Parent = holder
+
+        local fillGrad = Instance.new("UIGradient")
+        fillGrad.Rotation = 90
+        fillGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0.0, 0.92),
+            NumberSequenceKeypoint.new(0.5, 0.35),
+            NumberSequenceKeypoint.new(1.0, 0.92)
+        })
+        fillGrad.Parent = boxFrame
+
+        local strokeInner = Instance.new("UIStroke")
+        strokeInner.Thickness = 1
+        strokeInner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        strokeInner.Parent = boxFrame
+
+        local corners = {}
+        for i = 1, 8 do
+            local c = Instance.new("Frame")
+            c.BorderSizePixel = 0
+            c.Visible = false
+            c.ZIndex = 3
+            c.Parent = holder
+            corners[i] = c
+        end
+
+        local nameLbl = Instance.new("TextLabel")
+        nameLbl.BackgroundTransparency = 1
+        nameLbl.Position = UDim2.new(0.5, -100, 0, -18)
+        nameLbl.Size = UDim2.fromOffset(200, 16)
+        nameLbl.Font = Enum.Font.Arcade
+        nameLbl.TextSize = 15
+        nameLbl.TextColor3 = Color3.new(1, 1, 1)
+        nameLbl.TextStrokeTransparency = 0.2
+        nameLbl.Text = plr.Name
+        nameLbl.ZIndex = 4
+        nameLbl.Parent = holder
+
+        local itemLbl = Instance.new("TextLabel")
+        itemLbl.BackgroundTransparency = 1
+        itemLbl.Position = UDim2.new(0.5, -100, 1, 2)
+        itemLbl.Size = UDim2.fromOffset(200, 15)
+        itemLbl.Font = Enum.Font.Arcade
+        itemLbl.TextSize = 14
+        itemLbl.TextColor3 = Library.Theme.Accent
+        itemLbl.TextStrokeTransparency = 0.2
+        itemLbl.ZIndex = 4
+        itemLbl.Parent = holder
+
+        local hpBg = Instance.new("Frame")
+        hpBg.Position = UDim2.fromOffset(-6, 0)
+        hpBg.Size = UDim2.new(0, 3, 1, 0)
+        hpBg.BackgroundColor3 = Color3.new(0, 0, 0)
+        hpBg.BorderSizePixel = 0
+        hpBg.ZIndex = 3
+        hpBg.Parent = holder
+
+        local hpFill = Instance.new("Frame")
+        hpFill.AnchorPoint = Vector2.new(0, 1)
+        hpFill.Position = UDim2.fromScale(0, 1)
+        hpFill.Size = UDim2.fromScale(1, 1)
+        hpFill.BorderSizePixel = 0
+        hpFill.ZIndex = 4
+        hpFill.Parent = hpBg
+
+        local hpTxt = Instance.new("TextLabel")
+        hpTxt.BackgroundTransparency = 1
+        hpTxt.Position = UDim2.fromOffset(-34, 0)
+        hpTxt.Size = UDim2.fromOffset(26, 14)
+        hpTxt.Font = Enum.Font.Arcade
+        hpTxt.TextSize = 13
+        hpTxt.TextStrokeTransparency = 0.2
+        hpTxt.ZIndex = 4
+        hpTxt.Parent = holder
+
+        local tracer = Drawing and Drawing.new("Line") or nil
+        if tracer then
+            tracer.Thickness = 1.4
+            tracer.Visible = false
+        end
+
+        local bones = {}
+        if Drawing then
+            for i = 1, 14 do
+                local l = Drawing.new("Line")
+                l.Thickness = 1.4
+                l.Visible = false
+                bones[i] = l
+            end
+        end
+
+        PlayerObjects[plr] = {
+            Holder = holder,
+            OuterFrame = outerFrame,
+            BoxFrame = boxFrame,
+            StrokeOuter = strokeOuter,
+            StrokeInner = strokeInner,
+            Corners = corners,
+            NameLbl = nameLbl,
+            ItemLbl = itemLbl,
+            HpBg = hpBg,
+            HpFill = hpFill,
+            HpTxt = hpTxt,
+            Tracer = tracer,
+            Bones = bones
+        }
+    end
+
+    local function UpdateCorners(corners, w, h, col)
+        local lenX, lenY = math.floor(w * 0.25), math.floor(h * 0.25)
+        for _, c in ipairs(corners) do c.BackgroundColor3 = col; c.Visible = true end
+        corners[1].Position = UDim2.fromOffset(0, 0); corners[1].Size = UDim2.fromOffset(lenX, 2)
+        corners[2].Position = UDim2.fromOffset(0, 0); corners[2].Size = UDim2.fromOffset(2, lenY)
+        corners[3].Position = UDim2.fromOffset(w - lenX, 0); corners[3].Size = UDim2.fromOffset(lenX, 2)
+        corners[4].Position = UDim2.fromOffset(w - 2, 0); corners[4].Size = UDim2.fromOffset(2, lenY)
+        corners[5].Position = UDim2.fromOffset(0, h - 2); corners[5].Size = UDim2.fromOffset(lenX, 2)
+        corners[6].Position = UDim2.fromOffset(0, h - lenY); corners[6].Size = UDim2.fromOffset(2, lenY)
+        corners[7].Position = UDim2.fromOffset(w - lenX, h - 2); corners[7].Size = UDim2.fromOffset(lenX, 2)
+        corners[8].Position = UDim2.fromOffset(w - 2, h - lenY); corners[8].Size = UDim2.fromOffset(2, lenY)
+    end
+
+    for _, p in ipairs(Players:GetPlayers()) do CreatePlayerESP(p) end
+    Players.PlayerAdded:Connect(CreatePlayerESP)
+    Players.PlayerRemoving:Connect(CleanupPlayer)
+
+    RunService.RenderStepped:Connect(function()
+        if EspTab.Content.Visible and Page1.Frame.Visible then
+            local camPos = Vector3.new(math.sin(camYaw) * 6.2, 2.5, math.cos(camYaw) * 6.2)
+            PreviewCam.CFrame = CFrame.new(camPos, Vector3.new(0, 2.2, 0))
+
+            local boxOn = Library.Flags["esp_box"] == true
+            local boxCol = Library.Flags["esp_box_color"] or Library.Theme.Accent
+            local boxMethod = Library.Flags["esp_box_method"] or "Normal"
+            local fillOn = Library.Flags["esp_filled"] == true
+            local fillCol = Library.Flags["esp_filled_color"] or Library.Theme.Accent
+
+            local showBoxContainer = boxOn or fillOn or Library.Flags["esp_nickname"] or Library.Flags["esp_hp_bar"] or Library.Flags["esp_item"]
+            P_Box.Visible = showBoxContainer
+            P_Outer.Visible = showBoxContainer and boxOn and (boxMethod == "Normal")
+            P_Box.BackgroundColor3 = fillCol:Lerp(Color3.new(1, 1, 1), 0.35)
+            P_Box.BackgroundTransparency = fillOn and 0.25 or 1
+
+            if boxOn and boxMethod == "Normal" then
+                P_StrokeOuter.Enabled = true
+                P_StrokeInner.Enabled = true
+                P_StrokeInner.Color = boxCol
+                for _, c in ipairs(P_Corners) do c.Visible = false end
+            elseif boxOn and boxMethod == "Corners" then
+                P_StrokeOuter.Enabled = false
+                P_StrokeInner.Enabled = false
+                UpdateCorners(P_Corners, 115, 200, boxCol)
+            else
+                P_StrokeOuter.Enabled = false
+                P_StrokeInner.Enabled = false
+                for _, c in ipairs(P_Corners) do c.Visible = false end
+            end
+
+            P_Name.Visible = Library.Flags["esp_nickname"] == true
+            P_HpBg.Visible = Library.Flags["esp_hp_bar"] == true
+            P_HpText.Visible = Library.Flags["esp_hp_text"] == true
+            P_Item.Visible = Library.Flags["esp_item"] == true
+        end
+
+        local enabled = Library.Flags["esp_enabled"] == true
+        for plr, obj in pairs(PlayerObjects) do
+            local char = plr.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+            local valid = enabled and char and hrp and hum
+            if valid and Library.Flags["esp_deadcheck"] and hum.Health <= 0 then
+                valid = false
+            end
+            if valid and Library.Flags["esp_teamcheck"] and plr.Team ~= nil and plr.Team == LocalPlayer.Team then
+                valid = false
+            end
+
+            if not valid then
+                obj.Holder.Visible = false
+                if obj.Tracer then obj.Tracer.Visible = false end
+                for _, b in ipairs(obj.Bones) do b.Visible = false end
+                if SavedChams[plr] then
+                    for part, orig in pairs(SavedChams[plr]) do
+                        if part and part.Parent then
+                            part.Material = orig.Material
+                            part.Color = orig.Color
+                        end
+                    end
+                    SavedChams[plr] = nil
+                end
+                continue
+            end
+
+            if Library.Flags["esp_chams"] then
+                local chamsCol = Library.Flags["esp_chams_color"] or Library.Theme.Accent
+                SavedChams[plr] = SavedChams[plr] or {}
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                        if not SavedChams[plr][part] then
+                            SavedChams[plr][part] = { Material = part.Material, Color = part.Color }
+                        end
+                        part.Material = Enum.Material.ForceField
+                        part.Color = chamsCol
+                    end
+                end
+            elseif SavedChams[plr] then
+                for part, orig in pairs(SavedChams[plr]) do
+                    if part and part.Parent then
+                        part.Material = orig.Material
+                        part.Color = orig.Color
+                    end
+                end
+                SavedChams[plr] = nil
+            end
+
+            local rootPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if not onScreen then
+                obj.Holder.Visible = false
+                if obj.Tracer then obj.Tracer.Visible = false end
+                for _, b in ipairs(obj.Bones) do b.Visible = false end
+                continue
+            end
+
+            local topPos = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0, 3, 0))
+            local botPos = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3.2, 0))
+            local height = math.max(18, math.abs(botPos.Y - topPos.Y))
+            local width = math.max(12, height * 0.58)
+            local x, y = rootPos.X - width / 2, topPos.Y
+
+            obj.Holder.Visible = true
+            obj.Holder.Position = UDim2.fromOffset(x, y)
+            obj.Holder.Size = UDim2.fromOffset(width, height)
+
+            local boxOn = Library.Flags["esp_box"] == true
+            local boxCol = Library.Flags["esp_box_color"] or Library.Theme.Accent
+            local boxMethod = Library.Flags["esp_box_method"] or "Normal"
+            local fillOn = Library.Flags["esp_filled"] == true
+            local fillCol = Library.Flags["esp_filled_color"] or Library.Theme.Accent
+
+            obj.BoxFrame.BackgroundColor3 = fillCol:Lerp(Color3.new(1, 1, 1), 0.35)
+            obj.BoxFrame.BackgroundTransparency = fillOn and 0.25 or 1
+
+            if boxOn and boxMethod == "Normal" then
+                obj.OuterFrame.Visible = true
+                obj.StrokeOuter.Enabled = true
+                obj.StrokeInner.Enabled = true
+                obj.StrokeInner.Color = boxCol
+                for _, c in ipairs(obj.Corners) do c.Visible = false end
+            elseif boxOn and boxMethod == "Corners" then
+                obj.OuterFrame.Visible = false
+                obj.StrokeOuter.Enabled = false
+                obj.StrokeInner.Enabled = false
+                UpdateCorners(obj.Corners, width, height, boxCol)
+            else
+                obj.OuterFrame.Visible = false
+                obj.StrokeOuter.Enabled = false
+                obj.StrokeInner.Enabled = false
+                for _, c in ipairs(obj.Corners) do c.Visible = false end
+            end
+
+            local hpRatio = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+            local hpCol = GetHealthColor(hpRatio)
+            obj.HpBg.Visible = Library.Flags["esp_hp_bar"] == true
+            obj.HpFill.Size = UDim2.fromScale(1, hpRatio)
+            obj.HpFill.BackgroundColor3 = hpCol
+
+            obj.HpTxt.Visible = Library.Flags["esp_hp_text"] == true
+            obj.HpTxt.Text = tostring(math.floor(hum.Health))
+            obj.HpTxt.TextColor3 = hpCol
+            obj.HpTxt.Position = UDim2.fromOffset(-34, math.clamp((1 - hpRatio) * height - 6, 0, height - 12))
+
+            obj.NameLbl.Visible = Library.Flags["esp_nickname"] == true
+            local tool = char:FindFirstChildOfClass("Tool")
+            obj.ItemLbl.Visible = (Library.Flags["esp_item"] == true) and (tool ~= nil)
+            if tool then
+                obj.ItemLbl.Text = "[" .. tool.Name .. "]"
+            end
+
+            if obj.Tracer then
+                if Library.Flags["esp_tracers"] then
+                    local originMode = Library.Flags["esp_tracer_origin"] or "Bottom"
+                    local startVec
+                    if originMode == "Mouse" then
+                        startVec = UserInputService:GetMouseLocation()
+                    elseif originMode == "Top" then
+                        startVec = Vector2.new(Camera.ViewportSize.X / 2, 0)
+                    else
+                        startVec = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    end
+                    obj.Tracer.From = startVec
+                    obj.Tracer.To = Vector2.new(rootPos.X, botPos.Y)
+                    obj.Tracer.Color = Library.Flags["esp_tracer_color"] or Library.Theme.Accent
+                    obj.Tracer.Visible = true
+                else
+                    obj.Tracer.Visible = false
+                end
+            end
+
+            local skelOn = Library.Flags["esp_skeleton"] == true
+            local bonePairs = (hum.RigType == Enum.HumanoidRigType.R15) and R15_Bones or R6_Bones
+            local skelCol = Library.Flags["esp_skeleton_color"] or Color3.new(1, 1, 1)
+            for idx, line in ipairs(obj.Bones) do
+                local pair = bonePairs[idx]
+                if skelOn and pair then
+                    local p1 = char:FindFirstChild(pair[1])
+                    local p2 = char:FindFirstChild(pair[2])
+                    if p1 and p2 then
+                        local v1, vis1 = Camera:WorldToViewportPoint(p1.Position)
+                        local v2, vis2 = Camera:WorldToViewportPoint(p2.Position)
+                        if vis1 and vis2 then
+                            line.From = Vector2.new(v1.X, v1.Y)
+                            line.To = Vector2.new(v2.X, v2.Y)
+                            line.Color = skelCol
+                            line.Visible = true
+                            continue
+                        end
+                    end
+                end
+                line.Visible = false
+            end
+        end
+    end)
+
+    return EspTab
 end
 
 return Library
