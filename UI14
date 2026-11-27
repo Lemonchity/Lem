@@ -144,7 +144,7 @@ end
 -- ============================================================================
 
 local RootGui = Instance.new("ScreenGui")
-RootGui.Name = "LeMOON_Klax_UI_v2"
+RootGui.Name = "LemonchityUI_v2"
 RootGui.ResetOnSpawn = false
 RootGui.IgnoreGuiInset = true
 RootGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -194,29 +194,54 @@ function Library:Notify(options)
     })
     glow.Parent = card
 
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Position = UDim2.fromOffset(10, 4)
-    titleLabel.Size = UDim2.new(1, -20, 0, 16)
-    titleLabel.Font = Enum.Font.Arcade
-    titleLabel.TextSize = 15
-    titleLabel.TextColor3 = Library.Theme.Accent
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Text = title
-    titleLabel.ZIndex = 102
-    titleLabel.Parent = card
+        local TitleLbl = Instance.new("TextLabel")
+    TitleLbl.BackgroundTransparency = 1
+    TitleLbl.Position = UDim2.fromOffset(50, 8)
+    TitleLbl.Size = UDim2.new(0, 0, 0, 20)
+    TitleLbl.AutomaticSize = Enum.AutomaticSize.X
+    TitleLbl.Font = Enum.Font.Arcade
+    TitleLbl.TextSize = 21
+    TitleLbl.TextColor3 = Library.Theme.Text
+    TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLbl.Text = winName
+    TitleLbl.ZIndex = 4
+    TitleLbl.Parent = HeaderArea
 
-    local descLabel = Instance.new("TextLabel")
-    descLabel.BackgroundTransparency = 1
-    descLabel.Position = UDim2.fromOffset(10, 21)
-    descLabel.Size = UDim2.new(1, -20, 0, 18)
-    descLabel.Font = Enum.Font.Arcade
-    descLabel.TextSize = 14
-    descLabel.TextColor3 = Library.Theme.Text
-    descLabel.TextXAlignment = Enum.TextXAlignment.Left
-    descLabel.Text = ""
-    descLabel.ZIndex = 102
-    descLabel.Parent = card
+    local SubLbl = Instance.new("TextLabel")
+    SubLbl.BackgroundTransparency = 1
+    SubLbl.Position = UDim2.fromOffset(50, 28)
+    SubLbl.Size = UDim2.new(0, 0, 0, 14)
+    SubLbl.AutomaticSize = Enum.AutomaticSize.X
+    SubLbl.Font = Enum.Font.Arcade
+    SubLbl.TextSize = 12
+    SubLbl.TextColor3 = Library.Theme.Accent
+    SubLbl.TextXAlignment = Enum.TextXAlignment.Left
+    SubLbl.Text = winSub
+    SubLbl.ZIndex = 4
+    SubLbl.Parent = HeaderArea
+
+    local TabsScroll = Instance.new("ScrollingFrame")
+    TabsScroll.Name = "TabsBar"
+    TabsScroll.BackgroundTransparency = 1
+    TabsScroll.Position = UDim2.new(0, 165, 0, 8)
+    TabsScroll.Size = UDim2.new(1, -175, 0, 34)
+    TabsScroll.ScrollBarThickness = 0
+    TabsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    TabsScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
+    TabsScroll.ScrollingDirection = Enum.ScrollingDirection.X
+    TabsScroll.ZIndex = 4
+    TabsScroll.Parent = HeaderArea
+
+    local function UpdateTabsLayout()
+        local textWidth = math.max(TitleLbl.AbsoluteSize.X, SubLbl.AbsoluteSize.X)
+        local startX = 50 + textWidth + 18
+        TabsScroll.Position = UDim2.new(0, startX, 0, 8)
+        TabsScroll.Size = UDim2.new(1, -(startX + 12), 0, 34)
+    end
+
+    TitleLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsLayout)
+    SubLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsLayout)
+    task.defer(UpdateTabsLayout)
 
     local timerBg = Instance.new("Frame")
     timerBg.BackgroundColor3 = Color3.fromRGB(25, 32, 32)
