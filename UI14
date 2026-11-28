@@ -1660,6 +1660,47 @@ function Add:Dropdown(section, options)
     return DropdownObj
 end
 
+function Add:Textbox(section, options)
+    options = options or {}
+    local name = options.Name or "Textbox"
+    local placeholder = options.Placeholder or "Type here..."
+    local default = options.Default or ""
+    local flag = options.Flag or name
+    local callback = options.Callback or function() end
+
+    Library.Flags[flag] = default
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, 0, 0, 26)
+    box.BackgroundColor3 = Library.Theme.ElementBg
+    box.BorderSizePixel = 0
+    box.Font = Enum.Font.Arcade
+    box.TextSize = 14
+    box.TextColor3 = Library.Theme.Text
+    box.PlaceholderColor3 = Library.Theme.SubText
+    box.PlaceholderText = placeholder
+    box.Text = default
+    box.ClearTextOnFocus = false
+    box.ZIndex = 8
+    box.Parent = section.Container
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
+
+    local tbObj = {}
+    function tbObj:Set(val)
+        Library.Flags[flag] = val
+        box.Text = tostring(val)
+        callback(val)
+    end
+
+    box.FocusLost:Connect(function()
+        Library.Flags[flag] = box.Text
+        callback(box.Text)
+    end)
+
+    Library.FlagObjects[flag] = tbObj
+    return tbObj
+end
+
 function Add:Button(section, options)
     options = options or {}
     local name = options.Name or "Button"
