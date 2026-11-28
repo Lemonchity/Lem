@@ -812,6 +812,17 @@ function Create:Window(options)
     TabsScroll.ZIndex = 4
     TabsScroll.Parent = HeaderArea
 
+    local function UpdateTabsLayout()
+        local textWidth = math.max(TitleLbl.AbsoluteSize.X, SubLbl.AbsoluteSize.X)
+        local startX = 50 + textWidth + 18
+        TabsScroll.Position = UDim2.new(0, startX, 0, 8)
+        TabsScroll.Size = UDim2.new(1, -(startX + 12), 0, 34)
+    end
+
+    TitleLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsLayout)
+    SubLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsLayout)
+    task.defer(UpdateTabsLayout)
+
     local TabsLayout = Instance.new("UIListLayout")
     TabsLayout.FillDirection = Enum.FillDirection.Horizontal
     TabsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
